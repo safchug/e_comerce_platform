@@ -1,0 +1,65 @@
+services:
+  app:
+    build:
+      context: .
+      target: production
+    restart: unless-stopped
+    ports:
+      - '${PORT:-3000}:3000'
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-app}',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  backend:
+    driver: bridge
