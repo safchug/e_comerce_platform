@@ -1,5 +1,19 @@
 import { envValidationSchema } from './env.validation';
 
+interface ValidatedEnv {
+  NODE_ENV: string;
+  PORT: number;
+  POSTGRES_HOST: string;
+  POSTGRES_PORT: number;
+  POSTGRES_USER: string;
+  POSTGRES_PASSWORD: string;
+  POSTGRES_DB: string;
+  DATABASE_URL?: string;
+  REDIS_HOST: string;
+  REDIS_PORT: number;
+  REDIS_URL?: string;
+}
+
 describe('envValidationSchema', () => {
   const validEnv = {
     NODE_ENV: 'test',
@@ -19,11 +33,13 @@ describe('envValidationSchema', () => {
   });
 
   it('applies defaults for optional values', () => {
-    const { error, value } = envValidationSchema.validate({
+    const result = envValidationSchema.validate({
       POSTGRES_USER: 'test_user',
       POSTGRES_PASSWORD: 'test_pass',
       POSTGRES_DB: 'test_db',
     });
+    const { error } = result;
+    const value = result.value as ValidatedEnv;
 
     expect(error).toBeUndefined();
     expect(value.NODE_ENV).toBe('development');
