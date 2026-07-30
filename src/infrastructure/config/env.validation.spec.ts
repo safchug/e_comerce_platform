@@ -12,6 +12,7 @@ interface ValidatedEnv {
   REDIS_HOST: string;
   REDIS_PORT: number;
   REDIS_URL?: string;
+  LOG_LEVEL: string;
 }
 
 describe('envValidationSchema', () => {
@@ -46,6 +47,7 @@ describe('envValidationSchema', () => {
     expect(value.PORT).toBe(3000);
     expect(value.POSTGRES_PORT).toBe(5432);
     expect(value.REDIS_PORT).toBe(6379);
+    expect(value.LOG_LEVEL).toBe('info');
   });
 
   it.each(['POSTGRES_USER', 'POSTGRES_PASSWORD', 'POSTGRES_DB'])(
@@ -73,6 +75,15 @@ describe('envValidationSchema', () => {
     const { error } = envValidationSchema.validate({
       ...validEnv,
       NODE_ENV: 'staging',
+    });
+
+    expect(error).toBeDefined();
+  });
+
+  it('fails when LOG_LEVEL has an unsupported value', () => {
+    const { error } = envValidationSchema.validate({
+      ...validEnv,
+      LOG_LEVEL: 'verbose',
     });
 
     expect(error).toBeDefined();

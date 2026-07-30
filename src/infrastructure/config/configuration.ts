@@ -14,6 +14,9 @@ export interface AppConfig {
     port: number;
     url: string;
   };
+  logging: {
+    level: string;
+  };
 }
 
 export default (): AppConfig => {
@@ -43,6 +46,9 @@ export default (): AppConfig => {
       host: redisHost,
       port: redisPort,
       url: process.env.REDIS_URL ?? `redis://${redisHost}:${redisPort}`,
+    },
+    logging: {
+      level: process.env.LOG_LEVEL ?? 'info',
     },
   };
 };

@@ -40,6 +40,7 @@ describe('ConfigModule (integration)', () => {
       name: 'test_db',
       url: 'postgres://test_user:test_pass@test-host:5433/test_db',
     });
+    expect(configService.get('logging')).toEqual({ level: 'info' });
 
     await moduleRef.close();
   });
