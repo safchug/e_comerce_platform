@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -21,10 +22,12 @@ export class JwtTokenService implements TokenService {
       this.jwtService.signAsync(payload, {
         secret: auth.jwtAccessSecret,
         expiresIn: auth.jwtAccessExpiresIn,
+        jwtid: randomUUID(),
       } as JwtSignOptions),
       this.jwtService.signAsync(payload, {
         secret: auth.jwtRefreshSecret,
         expiresIn: auth.jwtRefreshExpiresIn,
+        jwtid: randomUUID(),
       } as JwtSignOptions),
     ]);
     return { accessToken, refreshToken };
