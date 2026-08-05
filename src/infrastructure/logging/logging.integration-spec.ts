@@ -25,6 +25,8 @@ describe('LoggingModule (integration)', () => {
       POSTGRES_USER: 'test_user',
       POSTGRES_PASSWORD: 'test_pass',
       POSTGRES_DB: 'test_db',
+      JWT_ACCESS_SECRET: 'test-access-secret-0123456789',
+      JWT_REFRESH_SECRET: 'test-refresh-secret-0123456789',
     };
 
     const moduleRef = await Test.createTestingModule({

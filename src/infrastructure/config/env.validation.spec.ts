@@ -12,6 +12,10 @@ interface ValidatedEnv {
   REDIS_HOST: string;
   REDIS_PORT: number;
   REDIS_URL?: string;
+  JWT_ACCESS_SECRET: string;
+  JWT_ACCESS_EXPIRES_IN: string;
+  JWT_REFRESH_SECRET: string;
+  JWT_REFRESH_EXPIRES_IN: string;
   LOG_LEVEL: string;
 }
 
@@ -26,6 +30,8 @@ describe('envValidationSchema', () => {
     POSTGRES_DB: 'test_db',
     REDIS_HOST: 'localhost',
     REDIS_PORT: '6379',
+    JWT_ACCESS_SECRET: 'test-access-secret-0123456789',
+    JWT_REFRESH_SECRET: 'test-refresh-secret-0123456789',
   };
 
   it('passes for a fully valid environment', () => {
@@ -38,6 +44,8 @@ describe('envValidationSchema', () => {
       POSTGRES_USER: 'test_user',
       POSTGRES_PASSWORD: 'test_pass',
       POSTGRES_DB: 'test_db',
+      JWT_ACCESS_SECRET: 'test-access-secret-0123456789',
+      JWT_REFRESH_SECRET: 'test-refresh-secret-0123456789',
     });
     const { error } = result;
     const value = result.value as ValidatedEnv;

@@ -6,8 +6,12 @@ describe('ConfigModule (integration)', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
+    // Exclude DATABASE_URL: this suite verifies the fallback URL built from
+    // the individual POSTGRES_* vars, not whatever is set in the real .env.
+    const restOriginalEnv = { ...originalEnv };
+    delete restOriginalEnv.DATABASE_URL;
     process.env = {
-      ...originalEnv,
+      ...restOriginalEnv,
       NODE_ENV: 'test',
       PORT: '4000',
       POSTGRES_USER: 'test_user',
@@ -17,6 +21,8 @@ describe('ConfigModule (integration)', () => {
       POSTGRES_PORT: '5433',
       REDIS_HOST: 'test-redis',
       REDIS_PORT: '6380',
+      JWT_ACCESS_SECRET: 'test-access-secret-0123456789',
+      JWT_REFRESH_SECRET: 'test-refresh-secret-0123456789',
     };
   });
 
