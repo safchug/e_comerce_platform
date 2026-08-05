@@ -38,12 +38,14 @@ describe('Auth (e2e)', () => {
       .send({ email, password: 'password123' })
       .expect(201);
 
-    expect(response.body).toEqual({
-      id: expect.any(String),
+    expect(response.body as Record<string, unknown>).toEqual({
+      id: expect.any(String) as unknown,
       email,
       role: 'CUSTOMER',
     });
-    expect(response.body.passwordHash).toBeUndefined();
+    expect(
+      (response.body as Record<string, unknown>).passwordHash,
+    ).toBeUndefined();
   });
 
   it('rejects registering the same email twice', async () => {
@@ -58,7 +60,7 @@ describe('Auth (e2e)', () => {
       .send({ email, password: 'password123' })
       .expect(409);
 
-    expect(response.body.message).toContain(email);
+    expect((response.body as { message: string }).message).toContain(email);
   });
 
   it('rejects registration with an invalid payload', async () => {
@@ -92,7 +94,7 @@ describe('Auth (e2e)', () => {
       .get('/users/me')
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(200)
-      .expect(({ body }) => {
+      .expect(({ body }: { body: { email: string } }) => {
         expect(body.email).toBe(email);
       });
 
@@ -135,7 +137,9 @@ describe('Auth (e2e)', () => {
       .send({ email, password: 'wrong-password' })
       .expect(401);
 
-    expect(response.body.message).toBe('Invalid email or password');
+    expect((response.body as { message: string }).message).toBe(
+      'Invalid email or password',
+    );
   });
 
   it('denies a customer access to an admin-only route', async () => {
