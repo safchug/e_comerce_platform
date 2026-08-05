@@ -38,14 +38,18 @@ describe('Auth (e2e)', () => {
       .send({ email, password: 'password123' })
       .expect(201);
 
-    expect(response.body as Record<string, unknown>).toEqual({
-      id: expect.any(String) as unknown,
+    const body = response.body as {
+      id: string;
+      email: string;
+      role: string;
+      passwordHash?: string;
+    };
+    expect(body).toEqual({
+      id: expect.any(String) as string,
       email,
       role: 'CUSTOMER',
     });
-    expect(
-      (response.body as Record<string, unknown>).passwordHash,
-    ).toBeUndefined();
+    expect(body.passwordHash).toBeUndefined();
   });
 
   it('rejects registering the same email twice', async () => {
