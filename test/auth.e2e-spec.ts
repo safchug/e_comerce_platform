@@ -39,16 +39,14 @@ describe('Auth (e2e)', () => {
       .expect(201);
 
     const body = response.body as {
-      id: string;
-      email: string;
-      role: string;
-      passwordHash?: string;
+      id: unknown;
+      email: unknown;
+      role: unknown;
+      passwordHash?: unknown;
     };
-    expect(body).toEqual({
-      id: expect.any(String) as string,
-      email,
-      role: 'CUSTOMER',
-    });
+    expect(body.id).toEqual(expect.any(String));
+    expect(body.email).toBe(email);
+    expect(body.role).toBe('CUSTOMER');
     expect(body.passwordHash).toBeUndefined();
   });
 
