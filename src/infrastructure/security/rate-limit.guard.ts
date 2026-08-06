@@ -4,6 +4,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  OnModuleDestroy,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
@@ -30,12 +31,20 @@ const SWEEP_INTERVAL_MS = 5 * 60_000;
  * @nestjs/throttler's RedisThrottlerStorage.
  */
 @Injectable()
-export class RateLimitGuard implements CanActivate {
+export class RateLimitGuard implements CanActivate, OnModuleDestroy {
   private readonly buckets = new Map<string, Bucket>();
+  private readonly sweepInterval: NodeJS.Timeout;
 
   constructor(private readonly reflector: Reflector) {
-    const sweep = setInterval(() => this.sweepExpired(), SWEEP_INTERVAL_MS);
-    sweep.unref?.();
+    this.sweepInterval = setInterval(
+      () => this.sweepExpired(),
+      SWEEP_INTERVAL_MS,
+    );
+    this.sweepInterval.unref?.();
+  }
+
+  onModuleDestroy(): void {
+    clearInterval(this.sweepInterval);
   }
 
   canActivate(context: ExecutionContext): boolean {
