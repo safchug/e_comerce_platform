@@ -23,6 +23,12 @@ export interface AppConfig {
   logging: {
     level: string;
   };
+  cors: {
+    origins: string[];
+  };
+  security: {
+    trustProxy: string | undefined;
+  };
 }
 
 export default (): AppConfig => {
@@ -61,6 +67,15 @@ export default (): AppConfig => {
     },
     logging: {
       level: process.env.LOG_LEVEL ?? 'info',
+    },
+    cors: {
+      origins: (process.env.CORS_ORIGIN ?? '')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter((origin) => origin.length > 0),
+    },
+    security: {
+      trustProxy: process.env.TRUST_PROXY || undefined,
     },
   };
 };

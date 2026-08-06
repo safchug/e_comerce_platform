@@ -58,11 +58,41 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_pass
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test_user -d test_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     env:
       NODE_ENV: test
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
       POSTGRES_USER: test_user
       POSTGRES_PASSWORD: test_pass
       POSTGRES_DB: test_db
+      DATABASE_URL: postgres://test_user:test_pass@localhost:5432/test_db
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      JWT_ACCESS_SECRET: ci-test-access-secret-not-for-prod-use
+      JWT_REFRESH_SECRET: ci-test-refresh-secret-not-for-prod-use
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -75,6 +105,9 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile
+
+      - name: Apply database migrations
+        run: yarn prisma migrate deploy
 
       - name: Unit & integration tests (with coverage)
         run: yarn test:cov
