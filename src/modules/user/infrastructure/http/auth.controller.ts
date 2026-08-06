@@ -18,6 +18,12 @@ import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { UserDomainExceptionFilter } from './user-domain-exception.filter';
+import { Throttle } from '../../../../infrastructure/security/throttle.decorator';
+
+// Credential/token endpoints get a tighter limit than the app default
+// (60 req/min) since they're the prime target for brute-forcing.
+const AUTH_THROTTLE_LIMIT = 5;
+const AUTH_THROTTLE_TTL_MS = 60_000;
 
 @Controller('auth')
 @UseFilters(UserDomainExceptionFilter)
@@ -30,6 +36,7 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @Throttle(AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS)
   async register(@Body() dto: RegisterDto) {
     const user = await this.registerUserUseCase.execute(
       dto.email,
@@ -40,6 +47,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @Throttle(AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS)
   async login(@Body() dto: LoginDto) {
     const { user, tokens } = await this.loginUserUseCase.execute(
       dto.email,
@@ -53,6 +61,7 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @Throttle(AUTH_THROTTLE_LIMIT, AUTH_THROTTLE_TTL_MS)
   refresh(@Body() dto: RefreshTokenDto) {
     return this.refreshTokensUseCase.execute(dto.refreshToken);
   }

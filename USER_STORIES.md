@@ -37,31 +37,33 @@
 
 ### Epic 0.1 — Project Setup
 
-- [ ] **US-001**: As a developer, I want a NestJS project scaffolded via the Nest CLI with strict TypeScript, ESLint, and Prettier configured, so that I get a convention-based foundation and catch bugs early.
+- [x] **US-001**: As a developer, I want a NestJS project scaffolded via the Nest CLI with strict TypeScript, ESLint, and Prettier configured, so that I get a convention-based foundation and catch bugs early.
   - AC: `nest new` project builds and runs (`npm run start:dev`); `tsconfig.json` has `strict: true`; `npm run lint` and `npm run build` both pass in CI.
   - Learn: Nest CLI project conventions, decorator/metadata-driven design, strict typing discipline.
-- [ ] **US-002**: As a developer, I want my core business/domain logic organized as plain, decorator-free TypeScript classes inside feature modules, so that my domain rules don't depend on the Nest framework.
+- [x] **US-002**: As a developer, I want my core business/domain logic organized as plain, decorator-free TypeScript classes inside feature modules, so that my domain rules don't depend on the Nest framework.
   - AC: Directory layout keeps `domain/` (entities, value objects, business rules — no Nest imports) separate from `application/` (use cases/services) and `infrastructure/` (Nest controllers, providers, ORM, adapters), organized under per-feature modules in `src/modules/*`.
   - Learn: Clean Architecture / Hexagonal (Ports & Adapters) pattern applied inside a framework, keeping the domain testable in isolation from Nest.
-- [ ] **US-003**: As a developer, I want to use Nest's built-in DI container correctly (constructor injection, custom providers, injection tokens for interfaces), so that components stay testable and swappable without manual wiring.
+- [x] **US-003**: As a developer, I want to use Nest's built-in DI container correctly (constructor injection, custom providers, injection tokens for interfaces), so that components stay testable and swappable without manual wiring.
   - AC: At least one dependency is bound via a custom provider/injection token (e.g. an abstract `ProductRepository` interface bound to a Postgres implementation); modules declare explicit `providers`/`exports`.
   - Learn: Nest's DI container, provider scopes, binding interfaces to implementations (Nest's take on Dependency Inversion).
 - [ ] **US-004**: As a developer, I want a Dockerized local dev environment (Nest app + Postgres + Redis) with hot reload, so that setup is reproducible.
   - AC: `docker-compose up` starts the Nest API (watch mode), DB, and cache with one command.
   - Learn: containerizing a Nest app, 12-factor app config via env vars.
-- [ ] **US-005**: As a developer, I want centralized configuration using Nest's `ConfigModule` with schema validation, so that misconfiguration fails fast at startup.
+  - Status: Postgres/Redis containers and a working *production* image build are done; `docker-compose.yml` still only targets the `production` stage, so there's no watch-mode dev container yet. Fixed the broken production build (missing `--ignore-scripts` on the prod-only install stage) but didn't add a dev target — still open.
+- [x] **US-005**: As a developer, I want centralized configuration using Nest's `ConfigModule` with schema validation, so that misconfiguration fails fast at startup.
   - AC: App refuses to boot if required env vars are missing/invalid, using `ConfigModule.forRoot({ validationSchema })` (Joi or a Zod-based adapter).
   - Learn: Nest `ConfigModule`, fail-fast validation, global vs. feature-scoped modules.
 
 ### Epic 0.2 — Quality Gates
 
-- [ ] **US-006**: As a developer, I want a test framework set up (unit + integration) with a coverage threshold, so that regressions are caught automatically.
+- [x] **US-006**: As a developer, I want a test framework set up (unit + integration) with a coverage threshold, so that regressions are caught automatically.
   - AC: `npm test` runs unit + integration suites; CI fails under e.g. 70% coverage on core domain.
   - Learn: testing pyramid, unit vs integration vs e2e boundaries.
-- [ ] **US-007**: As a developer, I want a CI pipeline (GitHub Actions) that lints, builds, and tests every PR, so that broken code never reaches main.
+- [x] **US-007**: As a developer, I want a CI pipeline (GitHub Actions) that lints, builds, and tests every PR, so that broken code never reaches main.
   - AC: PRs show pass/fail checks; merging is blocked on failure.
   - Learn: CI fundamentals, trunk-based development basics.
-- [ ] **US-008**: As a developer, I want structured logging and a request-scoped logger, so that I can trace what happened without `console.log`.
+  - Status: the `test` job was previously unrunnable in CI (no Postgres/Redis service containers, no `JWT_*` secrets in the job env, migrations never applied) — fixed by adding service containers, env vars, and a `prisma migrate deploy` step.
+- [x] **US-008**: As a developer, I want structured logging and a request-scoped logger, so that I can trace what happened without `console.log`.
   - AC: Every request logs a correlation/request ID; logs are JSON-structured (e.g. `pino`).
   - Learn: observability basics, structured logging.
 
@@ -73,16 +75,17 @@
 
 ### Epic 1.1 — Authentication & Users
 
-- [ ] **US-010**: As a guest, I want to register with email/password, so that I can create an account.
+- [x] **US-010**: As a guest, I want to register with email/password, so that I can create an account.
   - AC: Passwords hashed with bcrypt/argon2; duplicate email rejected with clear error; input validated at the boundary (DTO).
   - Learn: password hashing, input validation, DTO vs domain model separation.
-- [ ] **US-011**: As a registered user, I want to log in and receive a token, so that I can access protected resources.
+  - Status: email is now trimmed/lowercased at the DTO boundary — the unique constraint was case-sensitive (`User@x.com` and `user@x.com` could both register) before this fix.
+- [x] **US-011**: As a registered user, I want to log in and receive a token, so that I can access protected resources.
   - AC: JWT (or session) issued on success; invalid credentials return generic error (no user enumeration).
   - Learn: authN vs authZ, JWT vs session tradeoffs, OWASP A07 (auth failures).
-- [ ] **US-012**: As a user, I want my session to expire and be refreshable, so that stolen tokens have limited value.
+- [x] **US-012**: As a user, I want my session to expire and be refreshable, so that stolen tokens have limited value.
   - AC: Access token short-lived; refresh token rotation implemented; revocation possible.
   - Learn: token lifecycle, refresh token rotation, security tradeoffs.
-- [ ] **US-013**: As an authenticated user, I want role-based access (customer vs admin), so that only authorized users can manage the catalog.
+- [x] **US-013**: As an authenticated user, I want role-based access (customer vs admin), so that only authorized users can manage the catalog.
   - AC: Middleware enforces role checks; unauthorized access returns 403, not 500.
   - Learn: RBAC, middleware/interceptor pattern.
 
@@ -165,12 +168,14 @@
 ### Epic 3.2 — Resilience & Observability
 
 - [ ] **US-034**: As an operator, I want health-check and readiness endpoints, so that orchestration tools know when the app is safe to route traffic to.
+  - Status: a basic liveness endpoint (`GET /health`) now exists; a real readiness check (e.g. verifying the DB/Redis connections) is still open.
 - [ ] **US-035**: As an operator, I want metrics (request latency, error rate, order throughput) exposed (e.g. Prometheus format), so that I can monitor system health.
 - [ ] **US-036**: As an operator, I want distributed tracing across the checkout flow, so that I can debug slow/failing requests across services.
 - [ ] **US-037**: As a developer, I want retries with backoff and circuit breakers around the payment provider call, so that transient failures don't cascade.
   - Learn: resilience patterns (retry, circuit breaker, timeout).
 - [ ] **US-038**: As a developer, I want rate limiting on public endpoints (login, checkout), so that the system is protected from abuse.
   - Learn: OWASP API security, token bucket/leaky bucket algorithms.
+  - Status: added an in-memory, per-process fixed-window limiter (`RateLimitGuard`) applied globally, with a tighter limit on `/auth/*`. It's dependency-free (no npm registry access when this was written) and single-instance only — swap for `@nestjs/throttler` + a Redis store before running more than one instance.
 
 ### Epic 3.3 — Security Pass
 

@@ -25,4 +25,9 @@ export const envValidationSchema = Joi.object({
   LOG_LEVEL: Joi.string()
     .valid('fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent')
     .default('info'),
+
+  // Comma-separated list of allowed browser origins, e.g.
+  // "https://app.example.com,https://admin.example.com". Left unset, CORS
+  // stays disabled (safe default for a browser-facing API).
+  CORS_ORIGIN: Joi.string().optional().allow(''),
 });

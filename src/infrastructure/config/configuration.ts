@@ -23,6 +23,9 @@ export interface AppConfig {
   logging: {
     level: string;
   };
+  cors: {
+    origins: string[];
+  };
 }
 
 export default (): AppConfig => {
@@ -61,6 +64,12 @@ export default (): AppConfig => {
     },
     logging: {
       level: process.env.LOG_LEVEL ?? 'info',
+    },
+    cors: {
+      origins: (process.env.CORS_ORIGIN ?? '')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter((origin) => origin.length > 0),
     },
   };
 };
