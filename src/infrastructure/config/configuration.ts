@@ -14,6 +14,21 @@ export interface AppConfig {
     port: number;
     url: string;
   };
+  auth: {
+    jwtAccessSecret: string;
+    jwtAccessExpiresIn: string;
+    jwtRefreshSecret: string;
+    jwtRefreshExpiresIn: string;
+  };
+  logging: {
+    level: string;
+  };
+  cors: {
+    origins: string[];
+  };
+  security: {
+    trustProxy: string | undefined;
+  };
 }
 
 export default (): AppConfig => {
@@ -43,6 +58,24 @@ export default (): AppConfig => {
       host: redisHost,
       port: redisPort,
       url: process.env.REDIS_URL ?? `redis://${redisHost}:${redisPort}`,
+    },
+    auth: {
+      jwtAccessSecret: process.env.JWT_ACCESS_SECRET ?? '',
+      jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
+      jwtRefreshSecret: process.env.JWT_REFRESH_SECRET ?? '',
+      jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
+    },
+    logging: {
+      level: process.env.LOG_LEVEL ?? 'info',
+    },
+    cors: {
+      origins: (process.env.CORS_ORIGIN ?? '')
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter((origin) => origin.length > 0),
+    },
+    security: {
+      trustProxy: process.env.TRUST_PROXY || undefined,
     },
   };
 };
