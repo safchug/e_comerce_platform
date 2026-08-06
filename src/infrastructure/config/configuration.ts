@@ -26,6 +26,9 @@ export interface AppConfig {
   cors: {
     origins: string[];
   };
+  security: {
+    trustProxy: string | undefined;
+  };
 }
 
 export default (): AppConfig => {
@@ -70,6 +73,9 @@ export default (): AppConfig => {
         .split(',')
         .map((origin) => origin.trim())
         .filter((origin) => origin.length > 0),
+    },
+    security: {
+      trustProxy: process.env.TRUST_PROXY || undefined,
     },
   };
 };

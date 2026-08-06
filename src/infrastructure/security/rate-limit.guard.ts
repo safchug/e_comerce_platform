@@ -51,7 +51,13 @@ export class RateLimitGuard implements CanActivate {
       ]) ?? DEFAULT_TTL_MS;
 
     const request = context.switchToHttp().getRequest<Request>();
-    const key = `${request.ip}:${context.getClass().name}:${context.getHandler().name}`;
+    // `request.ips` is only populated when Express's `trust proxy` setting
+    // is enabled (see the TRUST_PROXY env var, wired up in main.ts).
+    // Without it - or behind a proxy that isn't configured as trusted -
+    // this falls back to `request.ip`, which is the proxy/load balancer's
+    // own address, meaning every client would share one bucket.
+    const clientIp = request.ips.length > 0 ? request.ips[0] : request.ip;
+    const key = `${clientIp}:${context.getClass().name}:${context.getHandler().name}`;
     const now = Date.now();
 
     const bucket = this.buckets.get(key);
