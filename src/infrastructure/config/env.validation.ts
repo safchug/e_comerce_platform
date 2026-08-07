@@ -38,4 +38,9 @@ export const envValidationSchema = Joi.object({
   // preset ("loopback"), or a comma-separated list of trusted IPs/CIDRs.
   // Left unset, proxy headers are not trusted (safe default).
   TRUST_PROXY: Joi.string().optional().allow(''),
+
+  // Toggles the Swagger UI / OpenAPI docs endpoint (api/docs). Left unset,
+  // it's enabled outside production and disabled in production, so internal
+  // API docs aren't exposed by default. Set explicitly to override either way.
+  SWAGGER_ENABLED: Joi.boolean().optional(),
 });
