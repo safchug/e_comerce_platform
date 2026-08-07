@@ -1,0 +1,52 @@
+import {
+  ProductRepository,
+  PRODUCT_REPOSITORY,
+} from '../../../domain/product.repository';
+import { Product } from '../../../domain/product.entity';
+import { Money } from '../../../../../domain/shared/money';
+
+/** In-memory fake used across use-case unit tests (no I/O). */
+export class FakeProductRepository implements ProductRepository {
+  private readonly productsById = new Map<string, Product>();
+
+  findById(id: string): Promise<Product | null> {
+    return Promise.resolve(this.productsById.get(id) ?? null);
+  }
+
+  findBySku(sku: string): Promise<Product | null> {
+    for (const product of this.productsById.values()) {
+      if (product.sku === sku) {
+        return Promise.resolve(product);
+      }
+    }
+    return Promise.resolve(null);
+  }
+
+  save(product: Product): Promise<Product> {
+    this.productsById.set(product.id, product);
+    return Promise.resolve(product);
+  }
+
+  delete(id: string): Promise<void> {
+    this.productsById.delete(id);
+    return Promise.resolve();
+  }
+
+  seed(overrides: Partial<Parameters<typeof Product.create>[0]> = {}): Product {
+    const now = new Date();
+    const product = Product.create({
+      id: overrides.id ?? `product-${this.productsById.size + 1}`,
+      sku: overrides.sku ?? `SKU-${this.productsById.size + 1}`,
+      name: overrides.name ?? `Product ${this.productsById.size + 1}`,
+      description: overrides.description ?? null,
+      price: overrides.price ?? Money.fromDecimal(9.99),
+      active: overrides.active ?? true,
+      createdAt: overrides.createdAt ?? now,
+      updatedAt: overrides.updatedAt ?? now,
+    });
+    this.productsById.set(product.id, product);
+    return product;
+  }
+}
+
+export { PRODUCT_REPOSITORY };

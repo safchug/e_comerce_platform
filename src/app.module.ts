@@ -5,11 +5,18 @@ import { LoggingModule } from './infrastructure/logging';
 import { DatabaseModule } from './infrastructure/database';
 import { RateLimitGuard } from './infrastructure/security/rate-limit.guard';
 import { UserModule } from './modules/user';
+import { ProductModule } from './modules/product';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 @Module({
-  imports: [ConfigModule, LoggingModule, DatabaseModule, UserModule],
+  imports: [
+    ConfigModule,
+    LoggingModule,
+    DatabaseModule,
+    UserModule,
+    ProductModule,
+  ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: RateLimitGuard }],
 })
