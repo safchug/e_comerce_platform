@@ -91,7 +91,7 @@
 
 ### Epic 1.2 — Product Catalog
 
-- [ ] **US-014**: As an admin, I want to create/update/delete products, so that the catalog stays current.
+- [x] **US-014**: As an admin, I want to create/update/delete products, so that the catalog stays current.
   - AC: CRUD endpoints behind admin auth; domain validation (price > 0, SKU unique) enforced in the domain layer, not just DB constraints.
   - Learn: where validation belongs (domain vs infra), repository pattern.
 - [ ] **US-015**: As a shopper, I want to browse products with pagination, so that large catalogs load quickly.
