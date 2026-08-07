@@ -29,6 +29,9 @@ export interface AppConfig {
   security: {
     trustProxy: string | undefined;
   };
+  swagger: {
+    enabled: boolean;
+  };
 }
 
 export default (): AppConfig => {
@@ -76,6 +79,15 @@ export default (): AppConfig => {
     },
     security: {
       trustProxy: process.env.TRUST_PROXY || undefined,
+    },
+    swagger: {
+      // Defaults to disabled in production so API docs aren't exposed
+      // unintentionally; SWAGGER_ENABLED can override the default in
+      // either direction.
+      enabled:
+        process.env.SWAGGER_ENABLED !== undefined
+          ? process.env.SWAGGER_ENABLED === 'true'
+          : (process.env.NODE_ENV ?? 'development') !== 'production',
     },
   };
 };

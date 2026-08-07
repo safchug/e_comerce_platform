@@ -39,18 +39,20 @@ async function bootstrap() {
     }),
   );
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('E-Commerce Platform API')
-    .setDescription('OpenAPI documentation for the e-commerce platform API')
-    .setVersion('0.0.1')
-    .addBearerAuth({
-      type: 'http',
-      scheme: 'bearer',
-      bearerFormat: 'JWT',
-    })
-    .build();
-  const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup('api/docs', app, swaggerDocument);
+  if (configService.get('swagger', { infer: true }).enabled) {
+    const swaggerConfig = new DocumentBuilder()
+      .setTitle('E-Commerce Platform API')
+      .setDescription('OpenAPI documentation for the e-commerce platform API')
+      .setVersion('0.0.1')
+      .addBearerAuth({
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      })
+      .build();
+    const swaggerDocument = SwaggerModule.createDocument(app, swaggerConfig);
+    SwaggerModule.setup('api/docs', app, swaggerDocument);
+  }
 
   await app.listen(process.env.PORT ?? 3000);
 }
