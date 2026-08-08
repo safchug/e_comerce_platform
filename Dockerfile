@@ -30,4 +30,20 @@ COPY --from=prod-deps /usr/src/app/node_modules ./node_modules
 COPY --from=build /usr/src/app/dist ./dist
 
 EXPOSE 3000
-CMD ["node", "dist/main"]
+CMD ["node", "dist/src/main"]
+
+# Local/dev target: reuses the "build" stage, which still has devDependencies
+# installed (incl. pino-pretty) and the compiled dist/. Only used by
+# docker-compose for local development so console logs are colorized and
+# human-readable instead of raw JSON.
+FROM build AS development
+ENV NODE_ENV=development
+
+EXPOSE 3000
+# Nothing else in this project applies migrations automatically (postinstall
+# only runs `prisma generate`, which regenerates the client - it does not
+# touch the database). Without this, a fresh/reset Postgres volume has no
+# tables and every query fails with a PrismaClientKnownRequestError (P2021,
+# "table does not exist"). `migrate deploy` only applies pending migrations
+# and is safe to re-run on every container start.
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main"]

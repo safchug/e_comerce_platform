@@ -2,13 +2,15 @@ services:
   app:
     build:
       context: .
-      target: production
+      target: development
     restart: unless-stopped
+    tty: true
     ports:
       - '${PORT:-3000}:3000'
     env_file:
       - .env
     environment:
+      NODE_ENV: development
       DATABASE_URL: postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-app}
       REDIS_URL: redis://redis:6379
     depends_on:
@@ -56,9 +58,28 @@ services:
     networks:
       - backend
 
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-admin}
+    ports:
+      - '${PGADMIN_PORT:-5050}:80'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - backend
+
 volumes:
   postgres_data:
   redis_data:
+  pgadmin_data:
 
 networks:
   backend:
