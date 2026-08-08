@@ -39,10 +39,22 @@ const REQUEST_ID_HEADER = 'x-request-id';
             },
             transport: isDevelopment
               ? {
-                  target: 'pino-pretty',
+                  // Points at ./pretty-transport instead of the 'pino-pretty'
+                  // package directly so we can pass a customPrettifiers.err
+                  // function - pino loads transports in a worker thread, and
+                  // functions can't cross that boundary via the options
+                  // object (see pretty-transport.ts for details).
+                  target: require.resolve('./pretty-transport'),
                   options: {
                     singleLine: true,
-                    colorize: true,
+                    // Only emit ANSI color codes when writing to a real
+                    // terminal. Forcing this to `true` prints raw escape
+                    // sequences (e.g. "[32mINFO[39m") when output is
+                    // redirected, piped, or viewed via `docker compose logs`
+                    // without a TTY attached.
+                    colorize: process.stdout.isTTY === true,
+                    translateTime: 'SYS:HH:MM:ss',
+                    ignore: 'pid,hostname',
                   },
                 }
               : undefined,
