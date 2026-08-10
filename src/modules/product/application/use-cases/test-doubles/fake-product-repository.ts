@@ -57,6 +57,19 @@ export class FakeProductRepository implements ProductRepository {
     });
   }
 
+  findDistinctCategories({
+    activeOnly,
+  }: {
+    activeOnly?: boolean;
+  }): Promise<string[]> {
+    const categories = new Set(
+      [...this.productsById.values()]
+        .filter((product) => !activeOnly || product.active)
+        .map((product) => product.category),
+    );
+    return Promise.resolve([...categories].sort());
+  }
+
   save(product: Product): Promise<Product> {
     this.productsById.set(product.id, product);
     return Promise.resolve(product);

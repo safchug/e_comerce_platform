@@ -60,6 +60,20 @@ export class PrismaProductRepository implements ProductRepository {
     return { items: rows.map((row) => this.toDomain(row)), total };
   }
 
+  async findDistinctCategories({
+    activeOnly,
+  }: {
+    activeOnly?: boolean;
+  }): Promise<string[]> {
+    const rows = await this.prisma.product.findMany({
+      where: activeOnly ? { active: true } : undefined,
+      distinct: ['category'],
+      select: { category: true },
+      orderBy: { category: 'asc' },
+    });
+    return rows.map((row) => row.category);
+  }
+
   async save(product: Product): Promise<Product> {
     const row = await this.prisma.product.upsert({
       where: { id: product.id },

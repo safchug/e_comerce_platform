@@ -1,8 +1,10 @@
 import { Controller, Get, Query, UseFilters } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ListProductsUseCase } from '../../application/use-cases/list-products.use-case';
+import { ListProductCategoriesUseCase } from '../../application/use-cases/list-product-categories.use-case';
 import { ListProductsQueryDto } from './dto/list-products-query.dto';
 import { PaginatedProductsResponseDto } from './dto/paginated-products-response.dto';
+import { ProductCategoriesResponseDto } from './dto/product-categories-response.dto';
 import { toProductResponseDto } from './dto/product-response.dto';
 import { ProductDomainExceptionFilter } from './product-domain-exception.filter';
 
@@ -11,7 +13,23 @@ import { ProductDomainExceptionFilter } from './product-domain-exception.filter'
 @Controller('products')
 @UseFilters(ProductDomainExceptionFilter)
 export class ProductCatalogController {
-  constructor(private readonly listProductsUseCase: ListProductsUseCase) {}
+  constructor(
+    private readonly listProductsUseCase: ListProductsUseCase,
+    private readonly listProductCategoriesUseCase: ListProductCategoriesUseCase,
+  ) {}
+
+  @Get('categories')
+  @ApiOperation({
+    summary: 'List distinct product categories, for populating a filter UI',
+  })
+  @ApiOkResponse({
+    description: 'Distinct category values currently in the active catalog',
+    type: ProductCategoriesResponseDto,
+  })
+  async listCategories(): Promise<ProductCategoriesResponseDto> {
+    const categories = await this.listProductCategoriesUseCase.execute();
+    return { categories };
+  }
 
   @Get()
   @ApiOperation({ summary: 'Browse active products (paginated)' })

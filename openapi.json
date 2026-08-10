@@ -600,6 +600,28 @@
           "products"
         ]
       }
+    },
+    "/products/categories": {
+      "get": {
+        "operationId": "ProductCatalogController_listCategories",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Distinct category values currently in the active catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCategoriesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List distinct product categories, for populating a filter UI",
+        "tags": [
+          "products"
+        ]
+      }
     }
   },
   "info": {
@@ -950,6 +972,26 @@
             "default": true
           }
         }
+      },
+      "ProductCategoriesResponseDto": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "description": "Distinct category values currently in the active catalog",
+            "example": [
+              "Books",
+              "Electronics",
+              "Home & Kitchen"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "categories"
+        ]
       },
       "PaginationMetaDto": {
         "type": "object",
