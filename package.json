@@ -25,6 +25,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
+    "db:seed": "ts-node --transpile-only -r ./prisma/resolve-js-imports.js prisma/seed.ts",
     "openapi:generate": "nest build && node dist/scripts/generate-openapi.js"
   },
   "dependencies": {
