@@ -9,6 +9,7 @@ import { ProductNotFoundError } from '../../domain/product.errors';
 
 export interface UpdateProductInput {
   name?: string;
+  category?: string;
   description?: string | null;
   priceCents?: number;
   currency?: string;
@@ -38,6 +39,7 @@ export class UpdateProductUseCase {
 
     const updated = existing.update({
       name: input.name,
+      category: input.category,
       description: input.description,
       price,
       active: input.active,

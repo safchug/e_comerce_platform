@@ -1,5 +1,6 @@
 import { Money } from '../../../domain/shared/money';
 import {
+  InvalidProductCategoryError,
   InvalidProductNameError,
   InvalidProductPriceError,
   InvalidSkuError,
@@ -9,6 +10,7 @@ export interface ProductProps {
   id: string;
   sku: string;
   name: string;
+  category: string;
   description: string | null;
   price: Money;
   active: boolean;
@@ -18,6 +20,7 @@ export interface ProductProps {
 
 export interface ProductUpdates {
   name?: string;
+  category?: string;
   description?: string | null;
   price?: Money;
   active?: boolean;
@@ -46,6 +49,9 @@ export class Product {
     if (!props.name || props.name.trim().length === 0) {
       throw new InvalidProductNameError();
     }
+    if (!props.category || props.category.trim().length === 0) {
+      throw new InvalidProductCategoryError();
+    }
     if (props.price.getCents() <= 0) {
       throw new InvalidProductPriceError();
     }
@@ -61,6 +67,10 @@ export class Product {
 
   get name(): string {
     return this.props.name;
+  }
+
+  get category(): string {
+    return this.props.category;
   }
 
   get description(): string | null {
@@ -93,6 +103,7 @@ export class Product {
     const next: ProductProps = {
       ...this.props,
       ...(changes.name !== undefined ? { name: changes.name } : {}),
+      ...(changes.category !== undefined ? { category: changes.category } : {}),
       ...(changes.description !== undefined
         ? { description: changes.description }
         : {}),

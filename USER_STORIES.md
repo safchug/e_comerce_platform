@@ -97,9 +97,10 @@
 - [ ] **US-015**: As a shopper, I want to browse products with pagination, so that large catalogs load quickly.
   - AC: Cursor or offset pagination; response includes total/next-page metadata.
   - Learn: pagination patterns, N+1 query avoidance.
-- [ ] **US-016**: As a shopper, I want to search/filter products by name, category, and price range, so that I can find what I want.
+- [x] **US-016**: As a shopper, I want to search/filter products by name, category, and price range, so that I can find what I want.
   - AC: Query supports combined filters; indexed columns used for filters.
   - Learn: query optimization, DB indexing.
+  - Status: added `category` to the `Product` model (backfilled existing rows via migration default, then dropped the default so it's required going forward). `GET /products` now takes optional `name`/`category`/`minPriceCents`/`maxPriceCents`, all combinable. Indexed for the access patterns that matter: a GIN `pg_trgm` index on `name` for case-insensitive substring search (plain btree can't serve `ILIKE '%x%'`), a composite btree on `(category, priceCents)` for category-only and category+price queries, and a standalone btree on `priceCents` for price-only range queries. Verified with `EXPLAIN` against a 20k-row seed that the composite and price indexes get picked up automatically; the trigram index only wins the planner's cost comparison once substring matches are rare enough (confirmed it's usable via `SET enable_seqscan = off`) — a good reminder that index existence isn't the same as index usage, the planner still chooses based on selectivity/cost.
 - [ ] **US-017**: As a developer, I want the product repository abstracted behind an interface, so that I can swap Postgres for another store without touching business logic.
   - AC: `ProductRepository` interface in domain layer; Postgres implementation in infrastructure layer; a fake in-memory implementation used in tests.
   - Learn: Repository pattern, testing against interfaces not implementations.

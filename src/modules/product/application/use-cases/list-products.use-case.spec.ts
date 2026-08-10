@@ -1,5 +1,7 @@
 import { ListProductsUseCase } from './list-products.use-case';
 import { FakeProductRepository } from './test-doubles/fake-product-repository';
+import { InvalidPriceRangeError } from '../../domain/product.errors';
+import { Money } from '../../../../domain/shared/money';
 
 describe('ListProductsUseCase', () => {
   let productRepository: FakeProductRepository;
@@ -55,5 +57,78 @@ describe('ListProductsUseCase', () => {
     const result = await useCase.execute({ page: 0 });
 
     expect(result.page).toBe(1);
+  });
+
+  it('filters by a case-insensitive name substring', async () => {
+    productRepository.seed({ name: 'Wireless Mouse' });
+    productRepository.seed({ name: 'Wired Keyboard' });
+
+    const result = await useCase.execute({ name: 'mouse' });
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].name).toBe('Wireless Mouse');
+  });
+
+  it('filters by exact category', async () => {
+    productRepository.seed({ category: 'Electronics' });
+    productRepository.seed({ category: 'Furniture' });
+
+    const result = await useCase.execute({ category: 'Furniture' });
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].category).toBe('Furniture');
+  });
+
+  it('filters by price range (inclusive)', async () => {
+    productRepository.seed({ price: Money.fromDecimal(10) });
+    productRepository.seed({ price: Money.fromDecimal(20) });
+    productRepository.seed({ price: Money.fromDecimal(30) });
+
+    const result = await useCase.execute({
+      minPriceCents: 1000,
+      maxPriceCents: 2000,
+    });
+
+    expect(result.items).toHaveLength(2);
+    expect(
+      result.items.every(
+        (product) =>
+          product.price.getCents() >= 1000 && product.price.getCents() <= 2000,
+      ),
+    ).toBe(true);
+  });
+
+  it('combines name, category, and price filters', async () => {
+    productRepository.seed({
+      name: 'Wireless Mouse',
+      category: 'Electronics',
+      price: Money.fromDecimal(15),
+    });
+    productRepository.seed({
+      name: 'Wireless Keyboard',
+      category: 'Electronics',
+      price: Money.fromDecimal(15),
+    });
+    productRepository.seed({
+      name: 'Wireless Mouse',
+      category: 'Furniture',
+      price: Money.fromDecimal(15),
+    });
+
+    const result = await useCase.execute({
+      name: 'mouse',
+      category: 'Electronics',
+      minPriceCents: 1000,
+      maxPriceCents: 2000,
+    });
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].category).toBe('Electronics');
+  });
+
+  it('rejects a price range where min is greater than max', async () => {
+    await expect(
+      useCase.execute({ minPriceCents: 2000, maxPriceCents: 1000 }),
+    ).rejects.toThrow(InvalidPriceRangeError);
   });
 });

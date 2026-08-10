@@ -15,17 +15,24 @@ describe('CreateProductUseCase', () => {
     const product = await useCase.execute({
       sku: 'SKU-1',
       name: 'Widget',
+      category: 'Tools',
       priceCents: 1999,
     });
 
     expect(product.sku).toBe('SKU-1');
     expect(product.name).toBe('Widget');
+    expect(product.category).toBe('Tools');
     expect(product.price.getCents()).toBe(1999);
     expect(product.active).toBe(true);
   });
 
   it('persists the product so it can be found by SKU afterwards', async () => {
-    await useCase.execute({ sku: 'SKU-1', name: 'Widget', priceCents: 1999 });
+    await useCase.execute({
+      sku: 'SKU-1',
+      name: 'Widget',
+      category: 'Tools',
+      priceCents: 1999,
+    });
 
     const found = await productRepository.findBySku('SKU-1');
     expect(found).not.toBeNull();
@@ -35,13 +42,34 @@ describe('CreateProductUseCase', () => {
     productRepository.seed({ sku: 'SKU-1' });
 
     await expect(
-      useCase.execute({ sku: 'SKU-1', name: 'Widget', priceCents: 1999 }),
+      useCase.execute({
+        sku: 'SKU-1',
+        name: 'Widget',
+        category: 'Tools',
+        priceCents: 1999,
+      }),
     ).rejects.toThrow(DuplicateSkuError);
   });
 
   it('rejects an invalid price via domain validation, not just DTO validation', async () => {
     await expect(
-      useCase.execute({ sku: 'SKU-2', name: 'Widget', priceCents: 0 }),
+      useCase.execute({
+        sku: 'SKU-2',
+        name: 'Widget',
+        category: 'Tools',
+        priceCents: 0,
+      }),
+    ).rejects.toThrow();
+  });
+
+  it('rejects an empty category via domain validation', async () => {
+    await expect(
+      useCase.execute({
+        sku: 'SKU-3',
+        name: 'Widget',
+        category: '  ',
+        priceCents: 1999,
+      }),
     ).rejects.toThrow();
   });
 });

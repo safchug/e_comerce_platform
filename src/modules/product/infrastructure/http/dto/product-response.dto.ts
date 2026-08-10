@@ -14,6 +14,9 @@ export class ProductResponseDto {
   @ApiProperty({ example: 'Wireless Mouse' })
   name!: string;
 
+  @ApiProperty({ example: 'Electronics' })
+  category!: string;
+
   @ApiPropertyOptional({
     example: 'Ergonomic wireless mouse with USB receiver',
     nullable: true,
@@ -41,6 +44,7 @@ export function toProductResponseDto(product: Product): ProductResponseDto {
     id: product.id,
     sku: product.sku,
     name: product.name,
+    category: product.category,
     description: product.description,
     priceCents: product.price.getCents(),
     currency: product.price.getCurrency(),

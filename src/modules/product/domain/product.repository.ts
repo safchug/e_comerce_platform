@@ -4,6 +4,12 @@ export interface FindAllParams {
   skip: number;
   take: number;
   activeOnly?: boolean;
+  /** Case-insensitive substring match against product name. */
+  name?: string;
+  /** Exact match against product category. */
+  category?: string;
+  minPriceCents?: number;
+  maxPriceCents?: number;
 }
 
 export interface FindAllResult {

@@ -406,6 +406,48 @@
               "example": 20,
               "type": "number"
             }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive substring match against product name",
+            "schema": {
+              "example": "mouse",
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "description": "Exact match against product category",
+            "schema": {
+              "example": "Electronics",
+              "type": "string"
+            }
+          },
+          {
+            "name": "minPriceCents",
+            "required": false,
+            "in": "query",
+            "description": "Minimum price in whole cents (inclusive)",
+            "schema": {
+              "minimum": 0,
+              "example": 1000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxPriceCents",
+            "required": false,
+            "in": "query",
+            "description": "Maximum price in whole cents (inclusive)",
+            "schema": {
+              "minimum": 0,
+              "example": 5000,
+              "type": "number"
+            }
           }
         ],
         "responses": {
@@ -785,6 +827,11 @@
             "minLength": 1,
             "example": "Wireless Mouse"
           },
+          "category": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Electronics"
+          },
           "description": {
             "type": "string",
             "example": "Ergonomic wireless mouse with USB receiver"
@@ -808,6 +855,7 @@
         "required": [
           "sku",
           "name",
+          "category",
           "priceCents"
         ]
       },
@@ -826,6 +874,10 @@
           "name": {
             "type": "string",
             "example": "Wireless Mouse"
+          },
+          "category": {
+            "type": "string",
+            "example": "Electronics"
           },
           "description": {
             "type": "string",
@@ -857,6 +909,7 @@
           "id",
           "sku",
           "name",
+          "category",
           "priceCents",
           "currency",
           "active",
@@ -871,6 +924,11 @@
             "type": "string",
             "minLength": 1,
             "example": "Wireless Mouse"
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Electronics"
           },
           "description": {
             "type": "string",

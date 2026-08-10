@@ -4,13 +4,15 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "cjs"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  moduleFormat    = "cjs"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
+  extensions = [pg_trgm]
 }
 
 enum Role {
@@ -34,6 +36,7 @@ model Product {
   id          String   @id @default(uuid())
   sku         String   @unique
   name        String
+  category    String
   description String?
   priceCents  Int
   currency    String   @default("USD")
@@ -41,5 +44,11 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Trigram index: makes case-insensitive "contains" search on name index-friendly.
+  @@index([name(ops: raw("gin_trgm_ops"))], type: Gin)
+  // Serves category-only filters and combined category+price-range filters (leftmost prefix).
+  @@index([category, priceCents])
+  // Serves price-range filters with no category given.
+  @@index([priceCents])
   @@map("products")
 }
