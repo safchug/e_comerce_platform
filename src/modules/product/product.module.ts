@@ -5,16 +5,19 @@ import { PrismaProductRepository } from './infrastructure/persistence/prisma-pro
 import { CreateProductUseCase } from './application/use-cases/create-product.use-case';
 import { UpdateProductUseCase } from './application/use-cases/update-product.use-case';
 import { DeleteProductUseCase } from './application/use-cases/delete-product.use-case';
+import { ListProductsUseCase } from './application/use-cases/list-products.use-case';
 import { ProductController } from './infrastructure/http/product.controller';
+import { ProductCatalogController } from './infrastructure/http/product-catalog.controller';
 
 @Module({
   imports: [DatabaseModule],
-  controllers: [ProductController],
+  controllers: [ProductController, ProductCatalogController],
   providers: [
     { provide: PRODUCT_REPOSITORY, useClass: PrismaProductRepository },
     CreateProductUseCase,
     UpdateProductUseCase,
     DeleteProductUseCase,
+    ListProductsUseCase,
   ],
   exports: [PRODUCT_REPOSITORY],
 })

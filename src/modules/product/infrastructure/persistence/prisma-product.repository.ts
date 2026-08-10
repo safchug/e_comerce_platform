@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../infrastructure/database';
 import type { Product as PrismaProductRow } from '../../../../infrastructure/database/prisma-client';
 import { Money } from '../../../../domain/shared/money';
-import { ProductRepository } from '../../domain/product.repository';
+import {
+  FindAllParams,
+  FindAllResult,
+  ProductRepository,
+} from '../../domain/product.repository';
 import { Product } from '../../domain/product.entity';
 
 @Injectable()
@@ -17,6 +21,25 @@ export class PrismaProductRepository implements ProductRepository {
   async findBySku(sku: string): Promise<Product | null> {
     const row = await this.prisma.product.findUnique({ where: { sku } });
     return row ? this.toDomain(row) : null;
+  }
+
+  async findAll({
+    skip,
+    take,
+    activeOnly,
+  }: FindAllParams): Promise<FindAllResult> {
+    const where = activeOnly ? { active: true } : undefined;
+    // One findMany + one count - avoids per-row queries (N+1) for pagination metadata.
+    const [rows, total] = await Promise.all([
+      this.prisma.product.findMany({
+        where,
+        skip,
+        take,
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.product.count({ where }),
+    ]);
+    return { items: rows.map((row) => this.toDomain(row)), total };
   }
 
   async save(product: Product): Promise<Product> {

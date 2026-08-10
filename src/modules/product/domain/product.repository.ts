@@ -1,9 +1,22 @@
 import { Product } from './product.entity';
 
+export interface FindAllParams {
+  skip: number;
+  take: number;
+  activeOnly?: boolean;
+}
+
+export interface FindAllResult {
+  items: Product[];
+  total: number;
+}
+
 /** Port: infrastructure provides the implementation (e.g. Prisma). */
 export interface ProductRepository {
   findById(id: string): Promise<Product | null>;
   findBySku(sku: string): Promise<Product | null>;
+  /** Single page of products plus the total matching count (2 queries, not N+1). */
+  findAll(params: FindAllParams): Promise<FindAllResult>;
   save(product: Product): Promise<Product>;
   delete(id: string): Promise<void>;
 }

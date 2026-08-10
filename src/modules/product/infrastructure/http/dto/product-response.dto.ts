@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Product } from '../../../domain/product.entity';
 
 export class ProductResponseDto {
   @ApiProperty({
@@ -33,4 +34,18 @@ export class ProductResponseDto {
 
   @ApiProperty()
   updatedAt!: Date;
+}
+
+export function toProductResponseDto(product: Product): ProductResponseDto {
+  return {
+    id: product.id,
+    sku: product.sku,
+    name: product.name,
+    description: product.description,
+    priceCents: product.price.getCents(),
+    currency: product.price.getCurrency(),
+    active: product.active,
+    createdAt: product.createdAt,
+    updatedAt: product.updatedAt,
+  };
 }
