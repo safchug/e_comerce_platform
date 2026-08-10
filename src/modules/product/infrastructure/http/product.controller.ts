@@ -29,13 +29,15 @@ import { ErrorResponseDto } from '../../../../infrastructure/http/dto/error-resp
 import { CreateProductUseCase } from '../../application/use-cases/create-product.use-case';
 import { UpdateProductUseCase } from '../../application/use-cases/update-product.use-case';
 import { DeleteProductUseCase } from '../../application/use-cases/delete-product.use-case';
-import { Product } from '../../domain/product.entity';
 import { ProductDomainExceptionFilter } from './product-domain-exception.filter';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
-import { ProductResponseDto } from './dto/product-response.dto';
+import {
+  ProductResponseDto,
+  toProductResponseDto,
+} from './dto/product-response.dto';
 
-/** Admin-only: catalog browsing endpoints for shoppers land separately with US-015/016. */
+/** Admin-only CRUD. Public catalog browsing lives in {@link ProductCatalogController}. */
 @ApiTags('products')
 @ApiBearerAuth()
 @ApiUnauthorizedResponse({
@@ -69,7 +71,7 @@ export class ProductController {
   })
   async create(@Body() dto: CreateProductDto): Promise<ProductResponseDto> {
     const product = await this.createProductUseCase.execute(dto);
-    return this.toResponse(product);
+    return toProductResponseDto(product);
   }
 
   @Patch(':id')
@@ -87,7 +89,7 @@ export class ProductController {
     @Body() dto: UpdateProductDto,
   ): Promise<ProductResponseDto> {
     const product = await this.updateProductUseCase.execute(id, dto);
-    return this.toResponse(product);
+    return toProductResponseDto(product);
   }
 
   @Delete(':id')
@@ -100,19 +102,5 @@ export class ProductController {
   })
   async delete(@Param('id') id: string): Promise<void> {
     await this.deleteProductUseCase.execute(id);
-  }
-
-  private toResponse(product: Product): ProductResponseDto {
-    return {
-      id: product.id,
-      sku: product.sku,
-      name: product.name,
-      description: product.description,
-      priceCents: product.price.getCents(),
-      currency: product.price.getCurrency(),
-      active: product.active,
-      createdAt: product.createdAt,
-      updatedAt: product.updatedAt,
-    };
   }
 }

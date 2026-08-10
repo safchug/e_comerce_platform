@@ -1,4 +1,6 @@
 import {
+  FindAllParams,
+  FindAllResult,
   ProductRepository,
   PRODUCT_REPOSITORY,
 } from '../../../domain/product.repository';
@@ -20,6 +22,16 @@ export class FakeProductRepository implements ProductRepository {
       }
     }
     return Promise.resolve(null);
+  }
+
+  findAll({ skip, take, activeOnly }: FindAllParams): Promise<FindAllResult> {
+    const all = [...this.productsById.values()]
+      .filter((product) => !activeOnly || product.active)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    return Promise.resolve({
+      items: all.slice(skip, skip + take),
+      total: all.length,
+    });
   }
 
   save(product: Product): Promise<Product> {
