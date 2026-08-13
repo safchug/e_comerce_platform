@@ -53,6 +53,7 @@ export class FakeProductRepository implements ProductRepository {
       description: overrides.description ?? null,
       price: overrides.price ?? Money.fromDecimal(9.99),
       active: overrides.active ?? true,
+      stockQuantity: overrides.stockQuantity ?? 0,
       createdAt: overrides.createdAt ?? now,
       updatedAt: overrides.updatedAt ?? now,
     });

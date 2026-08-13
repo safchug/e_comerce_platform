@@ -4,6 +4,7 @@ import {
   InvalidProductNameError,
   InvalidProductPriceError,
   InvalidSkuError,
+  InvalidStockQuantityError,
 } from './product.errors';
 
 describe('Product', () => {
@@ -14,6 +15,7 @@ describe('Product', () => {
     description: 'A useful widget',
     price: Money.fromDecimal(19.99),
     active: true,
+    stockQuantity: 10,
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -50,6 +52,18 @@ describe('Product', () => {
       expect(() => Product.create({ ...validProps(), name: '' })).toThrow(
         InvalidProductNameError,
       );
+    });
+
+    it('rejects a negative stock quantity', () => {
+      expect(() =>
+        Product.create({ ...validProps(), stockQuantity: -1 }),
+      ).toThrow(InvalidStockQuantityError);
+    });
+
+    it('rejects a non-integer stock quantity', () => {
+      expect(() =>
+        Product.create({ ...validProps(), stockQuantity: 1.5 }),
+      ).toThrow(InvalidStockQuantityError);
     });
   });
 

@@ -19,6 +19,13 @@ export class InvalidSkuError extends Error {
   }
 }
 
+export class InvalidStockQuantityError extends Error {
+  constructor() {
+    super('Stock quantity must be a non-negative integer');
+    this.name = 'InvalidStockQuantityError';
+  }
+}
+
 /** Cross-entity invariant: checked against the repository in the application layer. */
 export class DuplicateSkuError extends Error {
   constructor(sku: string) {
