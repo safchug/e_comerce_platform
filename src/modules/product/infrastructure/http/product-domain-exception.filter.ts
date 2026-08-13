@@ -5,6 +5,7 @@ import {
   InvalidProductNameError,
   InvalidProductPriceError,
   InvalidSkuError,
+  InvalidStockQuantityError,
   ProductNotFoundError,
 } from '../../domain/product.errors';
 
@@ -13,6 +14,7 @@ type DomainError =
   | InvalidProductNameError
   | InvalidProductPriceError
   | InvalidSkuError
+  | InvalidStockQuantityError
   | ProductNotFoundError;
 
 const STATUS_BY_ERROR_NAME: Record<string, number> = {
@@ -20,6 +22,7 @@ const STATUS_BY_ERROR_NAME: Record<string, number> = {
   InvalidProductNameError: 400,
   InvalidProductPriceError: 400,
   InvalidSkuError: 400,
+  InvalidStockQuantityError: 400,
   ProductNotFoundError: 404,
 };
 
@@ -29,6 +32,7 @@ const STATUS_BY_ERROR_NAME: Record<string, number> = {
   InvalidProductNameError,
   InvalidProductPriceError,
   InvalidSkuError,
+  InvalidStockQuantityError,
   ProductNotFoundError,
 )
 export class ProductDomainExceptionFilter implements ExceptionFilter {

@@ -15,6 +15,7 @@ export interface CreateProductInput {
   priceCents: number;
   currency?: string;
   active?: boolean;
+  stockQuantity?: number;
 }
 
 @Injectable()
@@ -38,6 +39,7 @@ export class CreateProductUseCase {
       description: input.description ?? null,
       price: Money.fromCents(input.priceCents, input.currency),
       active: input.active ?? true,
+      stockQuantity: input.stockQuantity ?? 0,
       createdAt: now,
       updatedAt: now,
     });

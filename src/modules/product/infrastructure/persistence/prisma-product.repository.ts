@@ -53,6 +53,7 @@ export class PrismaProductRepository implements ProductRepository {
         priceCents: product.price.getCents(),
         currency: product.price.getCurrency(),
         active: product.active,
+        stockQuantity: product.stockQuantity,
       },
       update: {
         sku: product.sku,
@@ -61,6 +62,7 @@ export class PrismaProductRepository implements ProductRepository {
         priceCents: product.price.getCents(),
         currency: product.price.getCurrency(),
         active: product.active,
+        stockQuantity: product.stockQuantity,
       },
     });
     return this.toDomain(row);
@@ -78,6 +80,7 @@ export class PrismaProductRepository implements ProductRepository {
       description: row.description,
       price: Money.fromCents(row.priceCents, row.currency),
       active: row.active,
+      stockQuantity: row.stockQuantity,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     });
