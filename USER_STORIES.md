@@ -49,7 +49,7 @@
 - [ ] **US-004**: As a developer, I want a Dockerized local dev environment (Nest app + Postgres + Redis) with hot reload, so that setup is reproducible.
   - AC: `docker-compose up` starts the Nest API (watch mode), DB, and cache with one command.
   - Learn: containerizing a Nest app, 12-factor app config via env vars.
-  - Status: Postgres/Redis containers and a working *production* image build are done; `docker-compose.yml` still only targets the `production` stage, so there's no watch-mode dev container yet. Fixed the broken production build (missing `--ignore-scripts` on the prod-only install stage) but didn't add a dev target — still open.
+  - Status: Postgres/Redis containers and a working _production_ image build are done; `docker-compose.yml` still only targets the `production` stage, so there's no watch-mode dev container yet. Fixed the broken production build (missing `--ignore-scripts` on the prod-only install stage) but didn't add a dev target — still open.
 - [x] **US-005**: As a developer, I want centralized configuration using Nest's `ConfigModule` with schema validation, so that misconfiguration fails fast at startup.
   - AC: App refuses to boot if required env vars are missing/invalid, using `ConfigModule.forRoot({ validationSchema })` (Joi or a Zod-based adapter).
   - Learn: Nest `ConfigModule`, fail-fast validation, global vs. feature-scoped modules.
@@ -94,14 +94,14 @@
 - [x] **US-014**: As an admin, I want to create/update/delete products, so that the catalog stays current.
   - AC: CRUD endpoints behind admin auth; domain validation (price > 0, SKU unique) enforced in the domain layer, not just DB constraints.
   - Learn: where validation belongs (domain vs infra), repository pattern.
-- [ ] **US-015**: As a shopper, I want to browse products with pagination, so that large catalogs load quickly.
+- [x] **US-015**: As a shopper, I want to browse products with pagination, so that large catalogs load quickly.
   - AC: Cursor or offset pagination; response includes total/next-page metadata.
   - Learn: pagination patterns, N+1 query avoidance.
 - [x] **US-016**: As a shopper, I want to search/filter products by name, category, and price range, so that I can find what I want.
   - AC: Query supports combined filters; indexed columns used for filters.
   - Learn: query optimization, DB indexing.
   - Status: added `category` to the `Product` model (backfilled existing rows via migration default, then dropped the default so it's required going forward). `GET /products` now takes optional `name`/`category`/`minPriceCents`/`maxPriceCents`, all combinable. Indexed for the access patterns that matter: a GIN `pg_trgm` index on `name` for case-insensitive substring search (plain btree can't serve `ILIKE '%x%'`), a composite btree on `(category, priceCents)` for category-only and category+price queries, and a standalone btree on `priceCents` for price-only range queries. Verified with `EXPLAIN` against a 20k-row seed that the composite and price indexes get picked up automatically; the trigram index only wins the planner's cost comparison once substring matches are rare enough (confirmed it's usable via `SET enable_seqscan = off`) — a good reminder that index existence isn't the same as index usage, the planner still chooses based on selectivity/cost.
-- [ ] **US-017**: As a developer, I want the product repository abstracted behind an interface, so that I can swap Postgres for another store without touching business logic.
+- [x] **US-017**: As a developer, I want the product repository abstracted behind an interface, so that I can swap Postgres for another store without touching business logic.
   - AC: `ProductRepository` interface in domain layer; Postgres implementation in infrastructure layer; a fake in-memory implementation used in tests.
   - Learn: Repository pattern, testing against interfaces not implementations.
 

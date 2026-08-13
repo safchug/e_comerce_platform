@@ -4,6 +4,7 @@ import {
   InvalidProductNameError,
   InvalidProductPriceError,
   InvalidSkuError,
+  InvalidStockQuantityError,
 } from './product.errors';
 
 export interface ProductProps {
@@ -14,6 +15,7 @@ export interface ProductProps {
   description: string | null;
   price: Money;
   active: boolean;
+  stockQuantity: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -24,6 +26,7 @@ export interface ProductUpdates {
   description?: string | null;
   price?: Money;
   active?: boolean;
+  stockQuantity?: number;
 }
 
 /**
@@ -55,6 +58,9 @@ export class Product {
     if (props.price.getCents() <= 0) {
       throw new InvalidProductPriceError();
     }
+    if (!Number.isInteger(props.stockQuantity) || props.stockQuantity < 0) {
+      throw new InvalidStockQuantityError();
+    }
   }
 
   get id(): string {
@@ -85,6 +91,10 @@ export class Product {
     return this.props.active;
   }
 
+  get stockQuantity(): number {
+    return this.props.stockQuantity;
+  }
+
   get createdAt(): Date {
     return this.props.createdAt;
   }
@@ -109,6 +119,9 @@ export class Product {
         : {}),
       ...(changes.price !== undefined ? { price: changes.price } : {}),
       ...(changes.active !== undefined ? { active: changes.active } : {}),
+      ...(changes.stockQuantity !== undefined
+        ? { stockQuantity: changes.stockQuantity }
+        : {}),
       updatedAt: new Date(),
     };
     Product.validate(next);

@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsPositive,
   IsString,
+  Min,
   MinLength,
 } from 'class-validator';
 
@@ -45,4 +46,10 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @ApiPropertyOptional({ description: 'Units available in stock', default: 0 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  stockQuantity?: number;
 }

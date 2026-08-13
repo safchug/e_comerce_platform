@@ -14,6 +14,7 @@ export interface UpdateProductInput {
   priceCents?: number;
   currency?: string;
   active?: boolean;
+  stockQuantity?: number;
 }
 
 @Injectable()
@@ -43,6 +44,7 @@ export class UpdateProductUseCase {
       description: input.description,
       price,
       active: input.active,
+      stockQuantity: input.stockQuantity,
     });
 
     return this.productRepository.save(updated);

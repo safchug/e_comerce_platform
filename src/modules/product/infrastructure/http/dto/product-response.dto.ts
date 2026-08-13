@@ -32,6 +32,9 @@ export class ProductResponseDto {
   @ApiProperty()
   active!: boolean;
 
+  @ApiProperty({ description: 'Units available in stock' })
+  stockQuantity!: number;
+
   @ApiProperty()
   createdAt!: Date;
 
@@ -49,6 +52,7 @@ export function toProductResponseDto(product: Product): ProductResponseDto {
     priceCents: product.price.getCents(),
     currency: product.price.getCurrency(),
     active: product.active,
+    stockQuantity: product.stockQuantity,
     createdAt: product.createdAt,
     updatedAt: product.updatedAt,
   };

@@ -52,9 +52,7 @@ export default function build(options: PrettyOptions) {
             extras.push(`meta: ${JSON.stringify(err.meta)}`);
           }
 
-          return extras.length > 0
-            ? `${base}\n${extras.join('\n')}`
-            : base;
+          return extras.length > 0 ? `${base}\n${extras.join('\n')}` : base;
         }
         return String(value);
       },
