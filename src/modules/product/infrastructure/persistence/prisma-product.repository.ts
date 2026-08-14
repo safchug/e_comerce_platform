@@ -9,6 +9,11 @@ import {
 } from '../../domain/product.repository';
 import { Product } from '../../domain/product.entity';
 
+/** Escapes Prisma/Postgres ILIKE wildcards so a literal `%` or `_` in user input is matched literally. */
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
 @Injectable()
 export class PrismaProductRepository implements ProductRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -27,8 +32,31 @@ export class PrismaProductRepository implements ProductRepository {
     skip,
     take,
     activeOnly,
+    name,
+    category,
+    minPriceCents,
+    maxPriceCents,
   }: FindAllParams): Promise<FindAllResult> {
-    const where = activeOnly ? { active: true } : undefined;
+    const where = {
+      ...(activeOnly ? { active: true } : {}),
+      ...(name
+        ? {
+            name: {
+              contains: escapeLikePattern(name),
+              mode: 'insensitive' as const,
+            },
+          }
+        : {}),
+      ...(category ? { category } : {}),
+      ...(minPriceCents !== undefined || maxPriceCents !== undefined
+        ? {
+            priceCents: {
+              ...(minPriceCents !== undefined ? { gte: minPriceCents } : {}),
+              ...(maxPriceCents !== undefined ? { lte: maxPriceCents } : {}),
+            },
+          }
+        : {}),
+    };
     // One findMany + one count - avoids per-row queries (N+1) for pagination metadata.
     const [rows, total] = await Promise.all([
       this.prisma.product.findMany({
@@ -42,6 +70,21 @@ export class PrismaProductRepository implements ProductRepository {
     return { items: rows.map((row) => this.toDomain(row)), total };
   }
 
+  async findDistinctCategories({
+    activeOnly,
+  }: {
+    activeOnly?: boolean;
+  }): Promise<string[]> {
+    // groupBy pushes distinctness down to SQL (GROUP BY); findMany({ distinct })
+    // fetches every matching row and dedupes client-side.
+    const rows = await this.prisma.product.groupBy({
+      by: ['category'],
+      where: activeOnly ? { active: true } : undefined,
+      orderBy: { category: 'asc' },
+    });
+    return rows.map((row) => row.category);
+  }
+
   async save(product: Product): Promise<Product> {
     const row = await this.prisma.product.upsert({
       where: { id: product.id },
@@ -49,6 +92,7 @@ export class PrismaProductRepository implements ProductRepository {
         id: product.id,
         sku: product.sku,
         name: product.name,
+        category: product.category,
         description: product.description,
         priceCents: product.price.getCents(),
         currency: product.price.getCurrency(),
@@ -58,6 +102,7 @@ export class PrismaProductRepository implements ProductRepository {
       update: {
         sku: product.sku,
         name: product.name,
+        category: product.category,
         description: product.description,
         priceCents: product.price.getCents(),
         currency: product.price.getCurrency(),
@@ -77,6 +122,7 @@ export class PrismaProductRepository implements ProductRepository {
       id: row.id,
       sku: row.sku,
       name: row.name,
+      category: row.category,
       description: row.description,
       price: Money.fromCents(row.priceCents, row.currency),
       active: row.active,

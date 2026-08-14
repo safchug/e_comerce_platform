@@ -4,6 +4,12 @@ export interface FindAllParams {
   skip: number;
   take: number;
   activeOnly?: boolean;
+  /** Case-insensitive substring match against product name. */
+  name?: string;
+  /** Exact match against product category. */
+  category?: string;
+  minPriceCents?: number;
+  maxPriceCents?: number;
 }
 
 export interface FindAllResult {
@@ -17,6 +23,8 @@ export interface ProductRepository {
   findBySku(sku: string): Promise<Product | null>;
   /** Single page of products plus the total matching count (2 queries, not N+1). */
   findAll(params: FindAllParams): Promise<FindAllResult>;
+  /** Distinct category values, alphabetically sorted - powers the category filter's option list. */
+  findDistinctCategories(params: { activeOnly?: boolean }): Promise<string[]>;
   save(product: Product): Promise<Product>;
   delete(id: string): Promise<void>;
 }

@@ -11,6 +11,7 @@ import { DuplicateSkuError } from '../../domain/product.errors';
 export interface CreateProductInput {
   sku: string;
   name: string;
+  category: string;
   description?: string | null;
   priceCents: number;
   currency?: string;
@@ -36,6 +37,7 @@ export class CreateProductUseCase {
       id: randomUUID(),
       sku: input.sku,
       name: input.name,
+      category: input.category,
       description: input.description ?? null,
       price: Money.fromCents(input.priceCents, input.currency),
       active: input.active ?? true,

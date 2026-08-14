@@ -1,6 +1,7 @@
 import { Money } from '../../../domain/shared/money';
 import { Product } from './product.entity';
 import {
+  InvalidProductCategoryError,
   InvalidProductNameError,
   InvalidProductPriceError,
   InvalidSkuError,
@@ -12,6 +13,7 @@ describe('Product', () => {
     id: 'product-1',
     sku: 'SKU-123',
     name: 'Widget',
+    category: 'Electronics',
     description: 'A useful widget',
     price: Money.fromDecimal(19.99),
     active: true,
@@ -54,6 +56,12 @@ describe('Product', () => {
       );
     });
 
+    it('rejects an empty category', () => {
+      expect(() => Product.create({ ...validProps(), category: '  ' })).toThrow(
+        InvalidProductCategoryError,
+      );
+    });
+
     it('rejects a negative stock quantity', () => {
       expect(() =>
         Product.create({ ...validProps(), stockQuantity: -1 }),
@@ -86,6 +94,22 @@ describe('Product', () => {
 
       expect(() => product.update({ price: Money.fromCents(0) })).toThrow(
         InvalidProductPriceError,
+      );
+    });
+
+    it('applies a category change', () => {
+      const product = Product.create(validProps());
+
+      const updated = product.update({ category: 'Home & Garden' });
+
+      expect(updated.category).toBe('Home & Garden');
+    });
+
+    it('rejects an update that would empty the category', () => {
+      const product = Product.create(validProps());
+
+      expect(() => product.update({ category: '' })).toThrow(
+        InvalidProductCategoryError,
       );
     });
 

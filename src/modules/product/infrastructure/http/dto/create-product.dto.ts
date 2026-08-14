@@ -20,6 +20,11 @@ export class CreateProductDto {
   @MinLength(1)
   name!: string;
 
+  @ApiProperty({ example: 'Electronics' })
+  @IsString()
+  @MinLength(1)
+  category!: string;
+
   @ApiPropertyOptional({
     example: 'Ergonomic wireless mouse with USB receiver',
   })

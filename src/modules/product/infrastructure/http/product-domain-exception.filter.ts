@@ -2,6 +2,8 @@ import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { Response } from 'express';
 import {
   DuplicateSkuError,
+  InvalidPriceRangeError,
+  InvalidProductCategoryError,
   InvalidProductNameError,
   InvalidProductPriceError,
   InvalidSkuError,
@@ -11,6 +13,8 @@ import {
 
 type DomainError =
   | DuplicateSkuError
+  | InvalidPriceRangeError
+  | InvalidProductCategoryError
   | InvalidProductNameError
   | InvalidProductPriceError
   | InvalidSkuError
@@ -19,6 +23,8 @@ type DomainError =
 
 const STATUS_BY_ERROR_NAME: Record<string, number> = {
   DuplicateSkuError: 409,
+  InvalidPriceRangeError: 400,
+  InvalidProductCategoryError: 400,
   InvalidProductNameError: 400,
   InvalidProductPriceError: 400,
   InvalidSkuError: 400,
@@ -29,6 +35,8 @@ const STATUS_BY_ERROR_NAME: Record<string, number> = {
 /** Maps product-module domain errors to HTTP responses, keeping the domain layer Nest-free. */
 @Catch(
   DuplicateSkuError,
+  InvalidPriceRangeError,
+  InvalidProductCategoryError,
   InvalidProductNameError,
   InvalidProductPriceError,
   InvalidSkuError,

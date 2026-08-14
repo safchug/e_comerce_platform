@@ -24,14 +24,50 @@ export class FakeProductRepository implements ProductRepository {
     return Promise.resolve(null);
   }
 
-  findAll({ skip, take, activeOnly }: FindAllParams): Promise<FindAllResult> {
+  findAll({
+    skip,
+    take,
+    activeOnly,
+    name,
+    category,
+    minPriceCents,
+    maxPriceCents,
+  }: FindAllParams): Promise<FindAllResult> {
+    const needle = name?.toLowerCase();
     const all = [...this.productsById.values()]
       .filter((product) => !activeOnly || product.active)
+      .filter(
+        (product) => !needle || product.name.toLowerCase().includes(needle),
+      )
+      .filter((product) => !category || product.category === category)
+      .filter(
+        (product) =>
+          minPriceCents === undefined ||
+          product.price.getCents() >= minPriceCents,
+      )
+      .filter(
+        (product) =>
+          maxPriceCents === undefined ||
+          product.price.getCents() <= maxPriceCents,
+      )
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     return Promise.resolve({
       items: all.slice(skip, skip + take),
       total: all.length,
     });
+  }
+
+  findDistinctCategories({
+    activeOnly,
+  }: {
+    activeOnly?: boolean;
+  }): Promise<string[]> {
+    const categories = new Set(
+      [...this.productsById.values()]
+        .filter((product) => !activeOnly || product.active)
+        .map((product) => product.category),
+    );
+    return Promise.resolve([...categories].sort());
   }
 
   save(product: Product): Promise<Product> {
@@ -50,6 +86,7 @@ export class FakeProductRepository implements ProductRepository {
       id: overrides.id ?? `product-${this.productsById.size + 1}`,
       sku: overrides.sku ?? `SKU-${this.productsById.size + 1}`,
       name: overrides.name ?? `Product ${this.productsById.size + 1}`,
+      category: overrides.category ?? 'General',
       description: overrides.description ?? null,
       price: overrides.price ?? Money.fromDecimal(9.99),
       active: overrides.active ?? true,

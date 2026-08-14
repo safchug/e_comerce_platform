@@ -18,9 +18,7 @@
           }
         },
         "summary": "Check service health/liveness",
-        "tags": [
-          "health"
-        ]
+        "tags": ["health"]
       }
     },
     "/auth/register": {
@@ -70,9 +68,7 @@
           }
         },
         "summary": "Register a new user account",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/login": {
@@ -122,9 +118,7 @@
           }
         },
         "summary": "Authenticate with email and password",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/refresh": {
@@ -174,9 +168,7 @@
           }
         },
         "summary": "Exchange a refresh token for a new token pair",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/auth/logout": {
@@ -214,9 +206,7 @@
           }
         ],
         "summary": "Invalidate the current refresh token",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/users/me": {
@@ -261,9 +251,7 @@
           }
         ],
         "summary": "Get the currently authenticated user",
-        "tags": [
-          "users"
-        ]
+        "tags": ["users"]
       }
     },
     "/users": {
@@ -308,9 +296,7 @@
           }
         ],
         "summary": "Admin-only placeholder endpoint",
-        "tags": [
-          "users"
-        ]
+        "tags": ["users"]
       }
     },
     "/products": {
@@ -375,9 +361,7 @@
           }
         ],
         "summary": "Create a product",
-        "tags": [
-          "products"
-        ]
+        "tags": ["products"]
       },
       "get": {
         "operationId": "ProductCatalogController_list",
@@ -406,6 +390,49 @@
               "example": 20,
               "type": "number"
             }
+          },
+          {
+            "name": "name",
+            "required": false,
+            "in": "query",
+            "description": "Case-insensitive substring match against product name",
+            "schema": {
+              "maxLength": 100,
+              "example": "mouse",
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "description": "Exact match against product category",
+            "schema": {
+              "example": "Electronics",
+              "type": "string"
+            }
+          },
+          {
+            "name": "minPriceCents",
+            "required": false,
+            "in": "query",
+            "description": "Minimum price in whole cents (inclusive)",
+            "schema": {
+              "minimum": 0,
+              "example": 1000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "maxPriceCents",
+            "required": false,
+            "in": "query",
+            "description": "Maximum price in whole cents (inclusive)",
+            "schema": {
+              "minimum": 0,
+              "example": 5000,
+              "type": "number"
+            }
           }
         ],
         "responses": {
@@ -421,9 +448,7 @@
           }
         },
         "summary": "Browse active products (paginated)",
-        "tags": [
-          "products"
-        ]
+        "tags": ["products"]
       }
     },
     "/products/{id}": {
@@ -497,9 +522,7 @@
           }
         ],
         "summary": "Update a product",
-        "tags": [
-          "products"
-        ]
+        "tags": ["products"]
       },
       "delete": {
         "operationId": "ProductController_delete",
@@ -554,9 +577,27 @@
           }
         ],
         "summary": "Delete a product",
-        "tags": [
-          "products"
-        ]
+        "tags": ["products"]
+      }
+    },
+    "/products/categories": {
+      "get": {
+        "operationId": "ProductCatalogController_listCategories",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Distinct category values currently in the active catalog",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductCategoriesResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List distinct product categories, for populating a filter UI",
+        "tags": ["products"]
       }
     },
     "/cart": {
@@ -591,9 +632,7 @@
           }
         ],
         "summary": "Get the current user's cart",
-        "tags": [
-          "cart"
-        ]
+        "tags": ["cart"]
       }
     },
     "/cart/items": {
@@ -658,9 +697,7 @@
           }
         ],
         "summary": "Add units of a product to the cart",
-        "tags": [
-          "cart"
-        ]
+        "tags": ["cart"]
       }
     },
     "/cart/items/{productId}": {
@@ -734,9 +771,7 @@
           }
         ],
         "summary": "Set the absolute quantity of a cart line",
-        "tags": [
-          "cart"
-        ]
+        "tags": ["cart"]
       },
       "delete": {
         "operationId": "CartController_removeItem",
@@ -771,9 +806,7 @@
           }
         ],
         "summary": "Remove a product from the cart",
-        "tags": [
-          "cart"
-        ]
+        "tags": ["cart"]
       }
     }
   },
@@ -799,9 +832,7 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "ok"
-            ],
+            "enum": ["ok"],
             "example": "ok"
           },
           "uptime": {
@@ -815,11 +846,7 @@
             "example": "2026-08-06T12:00:00.000Z"
           }
         },
-        "required": [
-          "status",
-          "uptime",
-          "timestamp"
-        ]
+        "required": ["status", "uptime", "timestamp"]
       },
       "ErrorResponseDto": {
         "type": "object",
@@ -845,10 +872,7 @@
             "example": "Invalid email or password"
           }
         },
-        "required": [
-          "statusCode",
-          "message"
-        ]
+        "required": ["statusCode", "message"]
       },
       "RegisterDto": {
         "type": "object",
@@ -865,10 +889,7 @@
             "example": "Str0ngPassw0rd!"
           }
         },
-        "required": [
-          "email",
-          "password"
-        ]
+        "required": ["email", "password"]
       },
       "UserResponseDto": {
         "type": "object",
@@ -884,20 +905,13 @@
             "example": "jane.doe@example.com"
           },
           "role": {
-            "enum": [
-              "CUSTOMER",
-              "ADMIN"
-            ],
+            "enum": ["CUSTOMER", "ADMIN"],
             "type": "string",
             "description": "Role assigned to the user",
             "example": "CUSTOMER"
           }
         },
-        "required": [
-          "id",
-          "email",
-          "role"
-        ]
+        "required": ["id", "email", "role"]
       },
       "LoginDto": {
         "type": "object",
@@ -912,10 +926,7 @@
             "example": "Str0ngPassw0rd!"
           }
         },
-        "required": [
-          "email",
-          "password"
-        ]
+        "required": ["email", "password"]
       },
       "LoginResponseDto": {
         "type": "object",
@@ -939,11 +950,7 @@
             ]
           }
         },
-        "required": [
-          "accessToken",
-          "refreshToken",
-          "user"
-        ]
+        "required": ["accessToken", "refreshToken", "user"]
       },
       "RefreshTokenDto": {
         "type": "object",
@@ -954,9 +961,7 @@
             "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
           }
         },
-        "required": [
-          "refreshToken"
-        ]
+        "required": ["refreshToken"]
       },
       "TokenPairDto": {
         "type": "object",
@@ -972,10 +977,7 @@
             "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
           }
         },
-        "required": [
-          "accessToken",
-          "refreshToken"
-        ]
+        "required": ["accessToken", "refreshToken"]
       },
       "AdminMessageDto": {
         "type": "object",
@@ -985,9 +987,7 @@
             "example": "Admin access confirmed"
           }
         },
-        "required": [
-          "message"
-        ]
+        "required": ["message"]
       },
       "CreateProductDto": {
         "type": "object",
@@ -1001,6 +1001,11 @@
             "type": "string",
             "minLength": 1,
             "example": "Wireless Mouse"
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Electronics"
           },
           "description": {
             "type": "string",
@@ -1028,11 +1033,7 @@
             "default": 0
           }
         },
-        "required": [
-          "sku",
-          "name",
-          "priceCents"
-        ]
+        "required": ["sku", "name", "category", "priceCents"]
       },
       "ProductResponseDto": {
         "type": "object",
@@ -1049,6 +1050,10 @@
           "name": {
             "type": "string",
             "example": "Wireless Mouse"
+          },
+          "category": {
+            "type": "string",
+            "example": "Electronics"
           },
           "description": {
             "type": "string",
@@ -1084,6 +1089,7 @@
           "id",
           "sku",
           "name",
+          "category",
           "priceCents",
           "currency",
           "active",
@@ -1099,6 +1105,11 @@
             "type": "string",
             "minLength": 1,
             "example": "Wireless Mouse"
+          },
+          "category": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Electronics"
           },
           "description": {
             "type": "string",
@@ -1126,6 +1137,20 @@
             "default": 0
           }
         }
+      },
+      "ProductCategoriesResponseDto": {
+        "type": "object",
+        "properties": {
+          "categories": {
+            "description": "Distinct category values currently in the active catalog",
+            "example": ["Books", "Electronics", "Home & Kitchen"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["categories"]
       },
       "PaginationMetaDto": {
         "type": "object",
@@ -1156,13 +1181,7 @@
             "example": true
           }
         },
-        "required": [
-          "total",
-          "page",
-          "limit",
-          "totalPages",
-          "hasNextPage"
-        ]
+        "required": ["total", "page", "limit", "totalPages", "hasNextPage"]
       },
       "PaginatedProductsResponseDto": {
         "type": "object",
@@ -1177,10 +1196,7 @@
             "$ref": "#/components/schemas/PaginationMetaDto"
           }
         },
-        "required": [
-          "data",
-          "meta"
-        ]
+        "required": ["data", "meta"]
       },
       "CartItemResponseDto": {
         "type": "object",
@@ -1194,10 +1210,7 @@
             "example": 2
           }
         },
-        "required": [
-          "productId",
-          "quantity"
-        ]
+        "required": ["productId", "quantity"]
       },
       "CartResponseDto": {
         "type": "object",
@@ -1225,13 +1238,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "id",
-          "userId",
-          "items",
-          "createdAt",
-          "updatedAt"
-        ]
+        "required": ["id", "userId", "items", "createdAt", "updatedAt"]
       },
       "AddCartItemDto": {
         "type": "object",
@@ -1248,10 +1255,7 @@
             "example": 1
           }
         },
-        "required": [
-          "productId",
-          "quantity"
-        ]
+        "required": ["productId", "quantity"]
       },
       "SetCartItemQuantityDto": {
         "type": "object",
@@ -1263,9 +1267,7 @@
             "example": 3
           }
         },
-        "required": [
-          "quantity"
-        ]
+        "required": ["quantity"]
       }
     }
   }
