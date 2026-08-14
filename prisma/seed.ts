@@ -86,6 +86,8 @@ const DEFAULT_COUNT = 500;
 const DEFAULT_SEED = 42;
 const INACTIVE_RATE = 0.08;
 const INSERT_CHUNK_SIZE = 1000;
+const MIN_STOCK_QUANTITY = 0;
+const MAX_STOCK_QUANTITY = 200;
 
 function parseIntArg(flag: string, fallback: number): number {
   const arg = process.argv.find((a) => a.startsWith(`--${flag}=`));
@@ -152,6 +154,7 @@ async function main(): Promise<void> {
         priceCents: randomInt(category.minPriceCents, category.maxPriceCents),
         currency: 'USD',
         active: random() >= INACTIVE_RATE,
+        stockQuantity: randomInt(MIN_STOCK_QUANTITY, MAX_STOCK_QUANTITY),
         createdAt: now,
         updatedAt: now,
       };
