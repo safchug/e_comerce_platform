@@ -7,6 +7,7 @@
 import 'reflect-metadata';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as prettier from 'prettier';
 import { Test } from '@nestjs/testing';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from '../src/app.module';
@@ -42,7 +43,16 @@ async function generate() {
   const document = SwaggerModule.createDocument(app, swaggerConfig);
 
   const outPath = path.resolve(process.cwd(), 'openapi.json');
-  fs.writeFileSync(outPath, JSON.stringify(document, null, 2) + '\n');
+  // Format through the project's own Prettier config so re-running this script
+  // doesn't produce a formatting-only diff against the committed file. Prettier
+  // preserves an object's original line breaks but always reflows arrays, so
+  // the input must already be indented (not a single compact line) to get the
+  // same "multi-line objects, single-line short arrays" shape as before.
+  const formatted = await prettier.format(JSON.stringify(document, null, 2), {
+    ...(await prettier.resolveConfig(outPath)),
+    filepath: outPath,
+  });
+  fs.writeFileSync(outPath, formatted);
   console.log(`OpenAPI spec written to ${outPath}`);
 
   await app.close();

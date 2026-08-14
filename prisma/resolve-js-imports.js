@@ -6,16 +6,38 @@
 // it to. Only used for ad-hoc scripts like `prisma/seed.ts`; the Nest app
 // itself never hits this because `nest build` compiles .ts -> .js first.
 const Module = require('module');
+const path = require('path');
+
+// Scoped to the generated client directory only, so a genuine typo in an
+// unrelated import path still fails with its original error instead of
+// silently resolving to something else.
+const GENERATED_PRISMA_DIR = path.join(
+  __dirname,
+  '..',
+  'src',
+  'generated',
+  'prisma',
+);
 
 const originalResolveFilename = Module._resolveFilename;
-Module._resolveFilename = function patchedResolveFilename(request, ...rest) {
+Module._resolveFilename = function patchedResolveFilename(
+  request,
+  parent,
+  ...rest
+) {
   try {
-    return originalResolveFilename.call(this, request, ...rest);
+    return originalResolveFilename.call(this, request, parent, ...rest);
   } catch (error) {
-    if (request.endsWith('.js')) {
+    const parentDir = parent && parent.filename && path.dirname(parent.filename);
+    const isFromGeneratedPrisma =
+      parentDir === GENERATED_PRISMA_DIR ||
+      (parentDir && parentDir.startsWith(GENERATED_PRISMA_DIR + path.sep));
+
+    if (request.endsWith('.js') && isFromGeneratedPrisma) {
       return originalResolveFilename.call(
         this,
         request.slice(0, -'.js'.length),
+        parent,
         ...rest,
       );
     }

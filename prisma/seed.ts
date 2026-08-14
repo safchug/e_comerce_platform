@@ -3,7 +3,9 @@
  * so the /products search/filter/pagination endpoints have something realistic
  * to filter (many categories, overlapping names, a wide price spread).
  *
- * Run with: `npm run db:seed` (override count with `npm run db:seed -- --count=2000`).
+ * Run with: `npm run db:seed` (override count with `npm run db:seed -- --count=2000`,
+ * override the PRNG seed with `--seed=123`; both default to fixed values so runs
+ * are reproducible - useful when comparing `EXPLAIN` output across changes).
  * Re-running is safe: it only deletes/replaces the products it previously seeded
  * (SKUs prefixed with SEED-) and leaves any manually created products alone.
  */
@@ -81,24 +83,52 @@ const CATEGORIES: CategorySpec[] = [
 
 const SEEDED_SKU_PREFIX = 'SEED-';
 const DEFAULT_COUNT = 500;
+const DEFAULT_SEED = 42;
 const INACTIVE_RATE = 0.08;
+const INSERT_CHUNK_SIZE = 1000;
 
-function parseCount(): number {
-  const arg = process.argv.find((a) => a.startsWith('--count='));
-  const count = arg ? Number(arg.split('=')[1]) : DEFAULT_COUNT;
-  return Number.isInteger(count) && count > 0 ? count : DEFAULT_COUNT;
+function parseIntArg(flag: string, fallback: number): number {
+  const arg = process.argv.find((a) => a.startsWith(`--${flag}=`));
+  if (!arg) return fallback;
+
+  const raw = arg.slice(`--${flag}=`.length);
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(
+      `Invalid --${flag}=${raw}: expected a positive integer.`,
+    );
+  }
+  return value;
 }
 
-function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+/** Mulberry32: small, seeded PRNG so seeded runs are reproducible across machines. */
+function createRandom(seed: number): () => number {
+  let state = seed >>> 0;
+  return function random(): number {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
 }
 
-function pick<T>(items: T[]): T {
-  return items[randomInt(0, items.length - 1)];
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
 }
 
 async function main(): Promise<void> {
-  const count = parseCount();
+  const count = parseIntArg('count', DEFAULT_COUNT);
+  const seed = parseIntArg('seed', DEFAULT_SEED);
+  const random = createRandom(seed);
+  const randomInt = (min: number, max: number): number =>
+    Math.floor(random() * (max - min + 1)) + min;
+  const pick = <T,>(items: T[]): T => items[randomInt(0, items.length - 1)];
+
   const prisma = new PrismaClient({
     adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
   });
@@ -121,15 +151,19 @@ async function main(): Promise<void> {
         description: `${name} - ${category.name} item for catalog testing`,
         priceCents: randomInt(category.minPriceCents, category.maxPriceCents),
         currency: 'USD',
-        active: Math.random() >= INACTIVE_RATE,
+        active: random() >= INACTIVE_RATE,
         createdAt: now,
         updatedAt: now,
       };
     });
 
-    await prisma.product.createMany({ data: products });
+    for (const batch of chunk(products, INSERT_CHUNK_SIZE)) {
+      await prisma.product.createMany({ data: batch });
+    }
 
-    console.log(`Seeded ${products.length} products across ${CATEGORIES.length} categories.`);
+    console.log(
+      `Seeded ${products.length} products across ${CATEGORIES.length} categories (seed=${seed}).`,
+    );
     for (const category of CATEGORIES) {
       const inCategory = products.filter((p) => p.category === category.name);
       console.log(

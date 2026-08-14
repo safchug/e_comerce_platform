@@ -9,6 +9,11 @@ import {
 } from '../../domain/product.repository';
 import { Product } from '../../domain/product.entity';
 
+/** Escapes Prisma/Postgres ILIKE wildcards so a literal `%` or `_` in user input is matched literally. */
+function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, (char) => `\\${char}`);
+}
+
 @Injectable()
 export class PrismaProductRepository implements ProductRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -35,7 +40,12 @@ export class PrismaProductRepository implements ProductRepository {
     const where = {
       ...(activeOnly ? { active: true } : {}),
       ...(name
-        ? { name: { contains: name, mode: 'insensitive' as const } }
+        ? {
+            name: {
+              contains: escapeLikePattern(name),
+              mode: 'insensitive' as const,
+            },
+          }
         : {}),
       ...(category ? { category } : {}),
       ...(minPriceCents !== undefined || maxPriceCents !== undefined
@@ -65,10 +75,11 @@ export class PrismaProductRepository implements ProductRepository {
   }: {
     activeOnly?: boolean;
   }): Promise<string[]> {
-    const rows = await this.prisma.product.findMany({
+    // groupBy pushes distinctness down to SQL (GROUP BY); findMany({ distinct })
+    // fetches every matching row and dedupes client-side.
+    const rows = await this.prisma.product.groupBy({
+      by: ['category'],
       where: activeOnly ? { active: true } : undefined,
-      distinct: ['category'],
-      select: { category: true },
       orderBy: { category: 'asc' },
     });
     return rows.map((row) => row.category);

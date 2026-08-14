@@ -33,7 +33,7 @@ export class FakeProductRepository implements ProductRepository {
     minPriceCents,
     maxPriceCents,
   }: FindAllParams): Promise<FindAllResult> {
-    const needle = name?.trim().toLowerCase();
+    const needle = name?.toLowerCase();
     const all = [...this.productsById.values()]
       .filter((product) => !activeOnly || product.active)
       .filter(

@@ -397,6 +397,7 @@
             "in": "query",
             "description": "Case-insensitive substring match against product name",
             "schema": {
+              "maxLength": 100,
               "example": "mouse",
               "type": "string"
             }
