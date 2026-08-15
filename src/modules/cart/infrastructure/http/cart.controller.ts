@@ -28,6 +28,8 @@ import { GetOrCreateCartUseCase } from '../../application/use-cases/get-or-creat
 import { AddCartItemUseCase } from '../../application/use-cases/add-cart-item.use-case';
 import { SetCartItemQuantityUseCase } from '../../application/use-cases/set-cart-item-quantity.use-case';
 import { RemoveCartItemUseCase } from '../../application/use-cases/remove-cart-item.use-case';
+import { ResolveCartTotalsUseCase } from '../../application/use-cases/resolve-cart-totals.use-case';
+import { Cart } from '../../domain/cart.entity';
 import { CartDomainExceptionFilter } from './cart-domain-exception.filter';
 import { AddCartItemDto } from './dto/add-cart-item.dto';
 import { SetCartItemQuantityDto } from './dto/set-cart-item-quantity.dto';
@@ -54,7 +56,13 @@ export class CartController {
     private readonly addCartItemUseCase: AddCartItemUseCase,
     private readonly setCartItemQuantityUseCase: SetCartItemQuantityUseCase,
     private readonly removeCartItemUseCase: RemoveCartItemUseCase,
+    private readonly resolveCartTotalsUseCase: ResolveCartTotalsUseCase,
   ) {}
+
+  private async toPricedResponse(cart: Cart): Promise<CartResponseDto> {
+    const { lines, totals } = await this.resolveCartTotalsUseCase.execute(cart);
+    return toCartResponseDto(cart, lines, totals);
+  }
 
   @Get()
   @ApiOperation({ summary: "Get the current user's cart" })
@@ -63,7 +71,7 @@ export class CartController {
     @CurrentUser() user: AccessTokenPayload,
   ): Promise<CartResponseDto> {
     const cart = await this.getOrCreateCartUseCase.execute(user.sub);
-    return toCartResponseDto(cart);
+    return this.toPricedResponse(cart);
   }
 
   @Post('items')
@@ -86,7 +94,7 @@ export class CartController {
       productId: dto.productId,
       quantity: dto.quantity,
     });
-    return toCartResponseDto(cart);
+    return this.toPricedResponse(cart);
   }
 
   @Patch('items/:productId')
@@ -110,7 +118,7 @@ export class CartController {
       productId,
       quantity: dto.quantity,
     });
-    return toCartResponseDto(cart);
+    return this.toPricedResponse(cart);
   }
 
   @Delete('items/:productId')

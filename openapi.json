@@ -1208,9 +1208,24 @@
           "quantity": {
             "type": "number",
             "example": 2
+          },
+          "unitPriceCents": {
+            "type": "number",
+            "description": "Current unit price, in cents",
+            "example": 1999
+          },
+          "lineTotalCents": {
+            "type": "number",
+            "description": "unitPriceCents x quantity, in cents",
+            "example": 3998
           }
         },
-        "required": ["productId", "quantity"]
+        "required": [
+          "productId",
+          "quantity",
+          "unitPriceCents",
+          "lineTotalCents"
+        ]
       },
       "CartResponseDto": {
         "type": "object",
@@ -1229,6 +1244,35 @@
               "$ref": "#/components/schemas/CartItemResponseDto"
             }
           },
+          "currency": {
+            "type": "string",
+            "example": "USD"
+          },
+          "subtotalCents": {
+            "type": "number",
+            "description": "Sum of line totals, in cents",
+            "example": 3998
+          },
+          "discountCents": {
+            "type": "number",
+            "description": "Discount applied, in cents",
+            "example": 0
+          },
+          "taxRate": {
+            "type": "number",
+            "description": "Flat tax rate applied, e.g. 0.0825 for 8.25%",
+            "example": 0.0825
+          },
+          "taxCents": {
+            "type": "number",
+            "description": "Tax charged on the post-discount amount, in cents",
+            "example": 330
+          },
+          "totalCents": {
+            "type": "number",
+            "description": "subtotalCents - discountCents + taxCents",
+            "example": 4328
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -1238,7 +1282,19 @@
             "type": "string"
           }
         },
-        "required": ["id", "userId", "items", "createdAt", "updatedAt"]
+        "required": [
+          "id",
+          "userId",
+          "items",
+          "currency",
+          "subtotalCents",
+          "discountCents",
+          "taxRate",
+          "taxCents",
+          "totalCents",
+          "createdAt",
+          "updatedAt"
+        ]
       },
       "AddCartItemDto": {
         "type": "object",

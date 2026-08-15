@@ -4,7 +4,9 @@ import {
   CartItemNotFoundError,
   InactiveProductError,
   InsufficientStockError,
+  InvalidDiscountError,
   InvalidQuantityError,
+  InvalidTaxRateError,
   ProductNotFoundError,
 } from '../../domain/cart.errors';
 
@@ -13,6 +15,8 @@ type DomainError =
   | InactiveProductError
   | InsufficientStockError
   | InvalidQuantityError
+  | InvalidDiscountError
+  | InvalidTaxRateError
   | ProductNotFoundError;
 
 const STATUS_BY_ERROR_NAME: Record<string, number> = {
@@ -20,6 +24,8 @@ const STATUS_BY_ERROR_NAME: Record<string, number> = {
   InactiveProductError: 409,
   InsufficientStockError: 409,
   InvalidQuantityError: 400,
+  InvalidDiscountError: 400,
+  InvalidTaxRateError: 400,
   ProductNotFoundError: 404,
 };
 
@@ -29,6 +35,8 @@ const STATUS_BY_ERROR_NAME: Record<string, number> = {
   InactiveProductError,
   InsufficientStockError,
   InvalidQuantityError,
+  InvalidDiscountError,
+  InvalidTaxRateError,
   ProductNotFoundError,
 )
 export class CartDomainExceptionFilter implements ExceptionFilter {

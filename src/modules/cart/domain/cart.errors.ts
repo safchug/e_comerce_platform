@@ -35,3 +35,17 @@ export class InsufficientStockError extends Error {
     this.name = 'InsufficientStockError';
   }
 }
+
+export class InvalidTaxRateError extends Error {
+  constructor() {
+    super('Tax rate must be a finite number that is not negative');
+    this.name = 'InvalidTaxRateError';
+  }
+}
+
+export class InvalidDiscountError extends Error {
+  constructor() {
+    super('Discount is invalid for this cart');
+    this.name = 'InvalidDiscountError';
+  }
+}
