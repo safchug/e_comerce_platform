@@ -1,6 +1,10 @@
 import { Money } from '../../../domain/shared/money';
 import { CartPricingService, PricedCartLine } from './cart-pricing.service';
-import { InvalidDiscountError, InvalidTaxRateError } from './cart.errors';
+import {
+  InvalidDiscountError,
+  InvalidTaxRateError,
+  MixedCurrencyCartError,
+} from './cart.errors';
 
 describe('CartPricingService', () => {
   describe('calculate', () => {
@@ -80,7 +84,6 @@ describe('CartPricingService', () => {
     });
 
     it('rounds a percentage discount to the nearest cent', () => {
-      // 999 * 33.33% = 333.0 -> exact; use a value that forces rounding
       const lines: PricedCartLine[] = [
         { productId: 'p1', unitPrice: Money.fromCents(1001), quantity: 1 },
       ];
@@ -231,7 +234,26 @@ describe('CartPricingService', () => {
           lines,
           discount: { type: 'fixed', amountOff: Money.fromCents(100, 'EUR') },
         }),
-      ).toThrow('Cannot operate on different currencies');
+      ).toThrow(MixedCurrencyCartError);
+    });
+
+    it('throws when cart lines are priced in more than one currency', () => {
+      const lines: PricedCartLine[] = [
+        {
+          productId: 'p1',
+          unitPrice: Money.fromCents(1000, 'USD'),
+          quantity: 1,
+        },
+        {
+          productId: 'p2',
+          unitPrice: Money.fromCents(500, 'EUR'),
+          quantity: 1,
+        },
+      ];
+
+      expect(() => CartPricingService.calculate({ lines })).toThrow(
+        MixedCurrencyCartError,
+      );
     });
   });
 });

@@ -49,3 +49,11 @@ export class InvalidDiscountError extends Error {
     this.name = 'InvalidDiscountError';
   }
 }
+
+/** Cart lines (or a fixed discount) priced in more than one currency - a data-integrity issue, not user error. */
+export class MixedCurrencyCartError extends Error {
+  constructor() {
+    super('Cart contains items priced in more than one currency');
+    this.name = 'MixedCurrencyCartError';
+  }
+}

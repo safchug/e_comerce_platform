@@ -1,5 +1,9 @@
 import { Money } from '../../../domain/shared/money';
-import { InvalidDiscountError, InvalidTaxRateError } from './cart.errors';
+import {
+  InvalidDiscountError,
+  InvalidTaxRateError,
+  MixedCurrencyCartError,
+} from './cart.errors';
 
 export interface PricedCartLine {
   productId: string;
@@ -56,11 +60,13 @@ export class CartPricingService {
     if (discount) {
       CartPricingService.assertValidDiscount(discount);
     }
-
-    const zero = Money.fromCents(
-      0,
-      lines[0]?.unitPrice.getCurrency() ?? currency,
+    const resolvedCurrency = CartPricingService.resolveCurrency(
+      lines,
+      discount,
+      currency,
     );
+
+    const zero = Money.fromCents(0, resolvedCurrency);
     const subtotal = lines.reduce(
       (sum, line) => sum.add(line.unitPrice.multiply(line.quantity)),
       zero,
@@ -82,6 +88,25 @@ export class CartPricingService {
       tax,
       total,
     };
+  }
+
+  /** All lines (and a fixed discount, if any) must share one currency - throws a clean domain error rather than letting Money's internal add/subtract check surface a raw Error. */
+  private static resolveCurrency(
+    lines: PricedCartLine[],
+    discount: CartDiscount | undefined,
+    fallbackCurrency: string,
+  ): string {
+    const currencies = new Set(
+      lines.map((line) => line.unitPrice.getCurrency()),
+    );
+    if (discount?.type === 'fixed') {
+      currencies.add(discount.amountOff.getCurrency());
+    }
+    if (currencies.size > 1) {
+      throw new MixedCurrencyCartError();
+    }
+    const [onlyCurrency] = currencies;
+    return onlyCurrency ?? fallbackCurrency;
   }
 
   private static assertValidTaxRate(taxRate: number): void {

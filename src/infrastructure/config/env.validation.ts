@@ -46,5 +46,5 @@ export const envValidationSchema = Joi.object({
 
   // Flat sales-tax rate applied to the cart total, expressed as a fraction
   // (e.g. 0.0825 for 8.25%). Left unset, no tax is charged.
-  TAX_RATE: Joi.number().min(0).default(0),
+  TAX_RATE: Joi.number().min(0).max(1).optional().allow('').default(0),
 });

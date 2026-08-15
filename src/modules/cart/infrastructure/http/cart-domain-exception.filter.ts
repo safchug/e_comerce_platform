@@ -6,17 +6,21 @@ import {
   InsufficientStockError,
   InvalidDiscountError,
   InvalidQuantityError,
-  InvalidTaxRateError,
+  MixedCurrencyCartError,
   ProductNotFoundError,
 } from '../../domain/cart.errors';
 
+// InvalidTaxRateError is deliberately not caught here: TAX_RATE is server
+// config, never client input, so a misconfigured value should surface as an
+// opaque 500 (Nest's default filter) rather than a client-facing 400 that
+// blames the caller and leaks config internals in the message.
 type DomainError =
   | CartItemNotFoundError
   | InactiveProductError
   | InsufficientStockError
   | InvalidQuantityError
   | InvalidDiscountError
-  | InvalidTaxRateError
+  | MixedCurrencyCartError
   | ProductNotFoundError;
 
 const STATUS_BY_ERROR_NAME: Record<string, number> = {
@@ -25,7 +29,7 @@ const STATUS_BY_ERROR_NAME: Record<string, number> = {
   InsufficientStockError: 409,
   InvalidQuantityError: 400,
   InvalidDiscountError: 400,
-  InvalidTaxRateError: 400,
+  MixedCurrencyCartError: 409,
   ProductNotFoundError: 404,
 };
 
@@ -36,7 +40,7 @@ const STATUS_BY_ERROR_NAME: Record<string, number> = {
   InsufficientStockError,
   InvalidQuantityError,
   InvalidDiscountError,
-  InvalidTaxRateError,
+  MixedCurrencyCartError,
   ProductNotFoundError,
 )
 export class CartDomainExceptionFilter implements ExceptionFilter {

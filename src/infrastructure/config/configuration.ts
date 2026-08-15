@@ -94,7 +94,7 @@ export default (): AppConfig => {
           : (process.env.NODE_ENV ?? 'development') !== 'production',
     },
     pricing: {
-      taxRate: parseFloat(process.env.TAX_RATE ?? '0'),
+      taxRate: process.env.TAX_RATE ? parseFloat(process.env.TAX_RATE) : 0,
     },
   };
 };

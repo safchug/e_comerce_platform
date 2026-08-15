@@ -37,19 +37,23 @@ export class ResolveCartTotalsUseCase {
     cart: Cart,
     discount?: CartDiscount,
   ): Promise<ResolvedCartPricing> {
-    const lines: PricedCartLine[] = await Promise.all(
-      cart.items.map(async (item) => {
-        const product = await this.productRepository.findById(item.productId);
-        if (!product) {
-          throw new ProductNotFoundError();
-        }
-        return {
-          productId: item.productId,
-          unitPrice: product.price,
-          quantity: item.quantity,
-        };
-      }),
+    const productIds = cart.items.map((item) => item.productId);
+    const products = await this.productRepository.findByIds(productIds);
+    const productsById = new Map(
+      products.map((product) => [product.id, product]),
     );
+
+    const lines: PricedCartLine[] = cart.items.map((item) => {
+      const product = productsById.get(item.productId);
+      if (!product) {
+        throw new ProductNotFoundError();
+      }
+      return {
+        productId: item.productId,
+        unitPrice: product.price,
+        quantity: item.quantity,
+      };
+    });
 
     const { taxRate } = this.configService.get('pricing', { infer: true });
     const totals = CartPricingService.calculate({ lines, taxRate, discount });

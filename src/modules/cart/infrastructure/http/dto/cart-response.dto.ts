@@ -69,19 +69,22 @@ export class CartResponseDto {
   updatedAt!: Date;
 }
 
+/**
+ * `lines` must be 1:1 with `cart.items`, in the same order - that's how
+ * ResolveCartTotalsUseCase builds them (mapped straight from cart.items) -
+ * so we zip by position rather than re-joining by productId.
+ */
 export function toCartResponseDto(
   cart: Cart,
   lines: PricedCartLine[],
   totals: CartTotals,
 ): CartResponseDto {
-  const linesByProductId = new Map(lines.map((line) => [line.productId, line]));
-
   return {
     id: cart.id,
     userId: cart.userId,
-    items: cart.items.map((item) => {
-      const line = linesByProductId.get(item.productId);
-      const unitPriceCents = line?.unitPrice.getCents() ?? 0;
+    items: cart.items.map((item, index) => {
+      const line = lines[index];
+      const unitPriceCents = line.unitPrice.getCents();
       return {
         productId: item.productId,
         quantity: item.quantity,
