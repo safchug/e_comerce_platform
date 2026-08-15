@@ -35,7 +35,7 @@ const STATUS_BY_ERROR_NAME: Record<string, number> = {
 export class OrderDomainExceptionFilter implements ExceptionFilter {
   catch(exception: DomainError, host: ArgumentsHost): void {
     const response = host.switchToHttp().getResponse<Response>();
-    const status = STATUS_BY_ERROR_NAME[exception.name] ?? 400;
+    const status = STATUS_BY_ERROR_NAME[exception.name];
     response.status(status).json({
       statusCode: status,
       message: exception.message,
