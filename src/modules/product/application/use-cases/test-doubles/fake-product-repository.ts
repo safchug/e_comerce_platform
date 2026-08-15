@@ -15,6 +15,15 @@ export class FakeProductRepository implements ProductRepository {
     return Promise.resolve(this.productsById.get(id) ?? null);
   }
 
+  findByIds(ids: string[]): Promise<Product[]> {
+    const idSet = new Set(ids);
+    return Promise.resolve(
+      [...this.productsById.values()].filter((product) =>
+        idSet.has(product.id),
+      ),
+    );
+  }
+
   findBySku(sku: string): Promise<Product | null> {
     for (const product of this.productsById.values()) {
       if (product.sku === sku) {

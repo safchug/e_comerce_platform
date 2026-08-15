@@ -96,4 +96,22 @@ describe('envValidationSchema', () => {
 
     expect(error).toBeDefined();
   });
+
+  it('passes when TAX_RATE is left blank, matching the .env.example convention', () => {
+    const { error } = envValidationSchema.validate({
+      ...validEnv,
+      TAX_RATE: '',
+    });
+
+    expect(error).toBeUndefined();
+  });
+
+  it('fails when TAX_RATE is negative or greater than 1', () => {
+    expect(
+      envValidationSchema.validate({ ...validEnv, TAX_RATE: '-0.01' }).error,
+    ).toBeDefined();
+    expect(
+      envValidationSchema.validate({ ...validEnv, TAX_RATE: '1.01' }).error,
+    ).toBeDefined();
+  });
 });

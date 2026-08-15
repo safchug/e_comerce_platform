@@ -7,6 +7,7 @@ import { GetOrCreateCartUseCase } from './application/use-cases/get-or-create-ca
 import { AddCartItemUseCase } from './application/use-cases/add-cart-item.use-case';
 import { SetCartItemQuantityUseCase } from './application/use-cases/set-cart-item-quantity.use-case';
 import { RemoveCartItemUseCase } from './application/use-cases/remove-cart-item.use-case';
+import { ResolveCartTotalsUseCase } from './application/use-cases/resolve-cart-totals.use-case';
 import { CartController } from './infrastructure/http/cart.controller';
 
 @Module({
@@ -18,6 +19,7 @@ import { CartController } from './infrastructure/http/cart.controller';
     AddCartItemUseCase,
     SetCartItemQuantityUseCase,
     RemoveCartItemUseCase,
+    ResolveCartTotalsUseCase,
   ],
 })
 export class CartModule {}

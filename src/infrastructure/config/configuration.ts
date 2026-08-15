@@ -32,6 +32,10 @@ export interface AppConfig {
   swagger: {
     enabled: boolean;
   };
+  pricing: {
+    /** Flat sales-tax rate applied to the cart total, e.g. 0.0825 for 8.25%. */
+    taxRate: number;
+  };
 }
 
 export default (): AppConfig => {
@@ -88,6 +92,9 @@ export default (): AppConfig => {
         process.env.SWAGGER_ENABLED !== undefined
           ? process.env.SWAGGER_ENABLED === 'true'
           : (process.env.NODE_ENV ?? 'development') !== 'production',
+    },
+    pricing: {
+      taxRate: process.env.TAX_RATE ? parseFloat(process.env.TAX_RATE) : 0,
     },
   };
 };

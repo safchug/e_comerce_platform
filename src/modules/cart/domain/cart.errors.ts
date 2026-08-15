@@ -35,3 +35,25 @@ export class InsufficientStockError extends Error {
     this.name = 'InsufficientStockError';
   }
 }
+
+export class InvalidTaxRateError extends Error {
+  constructor() {
+    super('Tax rate must be a finite number that is not negative');
+    this.name = 'InvalidTaxRateError';
+  }
+}
+
+export class InvalidDiscountError extends Error {
+  constructor() {
+    super('Discount is invalid for this cart');
+    this.name = 'InvalidDiscountError';
+  }
+}
+
+/** Cart lines (or a fixed discount) priced in more than one currency - a data-integrity issue, not user error. */
+export class MixedCurrencyCartError extends Error {
+  constructor() {
+    super('Cart contains items priced in more than one currency');
+    this.name = 'MixedCurrencyCartError';
+  }
+}

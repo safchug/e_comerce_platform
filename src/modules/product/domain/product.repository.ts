@@ -20,6 +20,8 @@ export interface FindAllResult {
 /** Port: infrastructure provides the implementation (e.g. Prisma). */
 export interface ProductRepository {
   findById(id: string): Promise<Product | null>;
+  /** Batch lookup by id - one query instead of N, e.g. for pricing a whole cart. Order is not guaranteed. */
+  findByIds(ids: string[]): Promise<Product[]>;
   findBySku(sku: string): Promise<Product | null>;
   /** Single page of products plus the total matching count (2 queries, not N+1). */
   findAll(params: FindAllParams): Promise<FindAllResult>;

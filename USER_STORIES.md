@@ -113,12 +113,13 @@
 
 ### Epic 2.1 — Shopping Cart
 
-- [ ] **US-020**: As a shopper, I want to add/remove items from a cart, so that I can collect items before purchasing.
+- [x] **US-020**: As a shopper, I want to add/remove items from a cart, so that I can collect items before purchasing.
   - AC: Cart persists across sessions (DB or Redis-backed); quantity updates validated against stock.
   - Learn: state management choices (stateless API + persisted cart), idempotency.
-- [ ] **US-021**: As a shopper, I want my cart total (with tax rules) calculated correctly, so that I know what I'll pay.
+- [x] **US-021**: As a shopper, I want my cart total (with tax rules) calculated correctly, so that I know what I'll pay.
   - AC: Pricing/tax logic isolated in a domain service, unit-tested with edge cases (0 items, discounts, rounding).
   - Learn: domain services vs anemic models, floating point money pitfalls (use integer cents).
+  - Status: added `CartPricingService` (`src/modules/cart/domain/cart-pricing.service.ts`) - a pure, Nest-free domain service that turns priced lines into subtotal/discount/tax/total using `Money` (integer cents throughout, `Math.round` at every multiply so nothing drifts to floating point). Supports an optional percentage or fixed discount (clamped so it can never exceed the subtotal) and a configurable flat tax rate (`TAX_RATE` env var, applied to the post-discount amount). The Cart entity itself still only tracks productId/quantity - a new `ResolveCartTotalsUseCase` in the application layer is the one doing I/O (fetching current prices from `ProductRepository`) and handing plain `Money` values to the domain service, which is what keeps the pricing math unit-testable with a fake repository instead of a real DB. `GET/POST/PATCH /cart` now return `subtotalCents`/`discountCents`/`taxCents`/`totalCents`/`taxRate` plus a per-line `unitPriceCents`/`lineTotalCents`. Edge cases covered in `cart-pricing.service.spec.ts`: empty cart, discount larger than the subtotal, percentage/fixed discounts, and tax/discount rounding (e.g. 999¢ × 8.25% = 82.4175 → 82¢).
 
 ### Epic 2.2 — Orders & Checkout
 
