@@ -1,0 +1,37 @@
+export class EmptyCartError extends Error {
+  constructor() {
+    super('Cannot place an order from an empty cart');
+    this.name = 'EmptyCartError';
+  }
+}
+
+export class InvalidQuantityError extends Error {
+  constructor() {
+    super('Quantity must be a positive integer');
+    this.name = 'InvalidQuantityError';
+  }
+}
+
+export class ProductNotFoundError extends Error {
+  constructor() {
+    super('Product not found');
+    this.name = 'ProductNotFoundError';
+  }
+}
+
+export class InactiveProductError extends Error {
+  constructor() {
+    super('Product is not available for purchase');
+    this.name = 'InactiveProductError';
+  }
+}
+
+/** Cross-aggregate invariant: checked against the product repository, then re-checked atomically inside the placement transaction. */
+export class InsufficientStockError extends Error {
+  constructor(available: number, requested: number) {
+    super(
+      `Only ${available} unit(s) in stock, but ${requested} were requested`,
+    );
+    this.name = 'InsufficientStockError';
+  }
+}

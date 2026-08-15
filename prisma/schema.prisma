@@ -29,7 +29,8 @@ model User {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  cart Cart?
+  cart   Cart?
+  orders Order[]
 
   @@map("users")
 }
@@ -47,7 +48,8 @@ model Product {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  cartItems CartItem[]
+  cartItems  CartItem[]
+  orderItems OrderItem[]
 
   // Trigram index: makes case-insensitive "contains" search on name index-friendly.
   @@index([name(ops: raw("gin_trgm_ops"))], type: Gin)
@@ -85,4 +87,39 @@ model CartItem {
 
   @@unique([cartId, productId])
   @@map("cart_items")
+}
+
+// An Order is a point-in-time snapshot, not a live view like Cart: prices
+// and totals are frozen at placement time, so later product price changes
+// never alter a past order (see PlaceOrderUseCase / OrderItem.unitPriceCents).
+model Order {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items         OrderItem[]
+  currency      String
+  subtotalCents Int
+  discountCents Int
+  taxRate       Float
+  taxCents      Int
+  totalCents    Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id             String  @id @default(uuid())
+  orderId        String
+  order          Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId      String
+  // Deliberately not Cascade (unlike CartItem->Product): a past order must
+  // survive the product it references being deleted from the catalog.
+  product        Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+  quantity       Int
+  unitPriceCents Int
+  currency       String
+
+  @@map("order_items")
 }
