@@ -21,5 +21,6 @@ import { CartController } from './infrastructure/http/cart.controller';
     RemoveCartItemUseCase,
     ResolveCartTotalsUseCase,
   ],
+  exports: [CART_REPOSITORY],
 })
 export class CartModule {}

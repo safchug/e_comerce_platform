@@ -7,6 +7,7 @@ import { RateLimitGuard } from './infrastructure/security/rate-limit.guard';
 import { UserModule } from './modules/user';
 import { ProductModule } from './modules/product';
 import { CartModule } from './modules/cart';
+import { OrderModule } from './modules/order';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -18,6 +19,7 @@ import { AppService } from './app.service';
     UserModule,
     ProductModule,
     CartModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService, { provide: APP_GUARD, useClass: RateLimitGuard }],
