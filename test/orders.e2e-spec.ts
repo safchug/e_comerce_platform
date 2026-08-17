@@ -20,6 +20,7 @@ interface CartResponse {
 interface OrderResponse {
   id: string;
   items: { productId: string; quantity: number; unitPriceCents: number }[];
+  status: string;
   subtotalCents: number;
   totalCents: number;
 }
@@ -261,5 +262,116 @@ describe('Order placement (e2e)', () => {
 
     const cart = await getCart(customerToken);
     expect(cart.items).toHaveLength(2);
+  });
+
+  describe('order status lifecycle', () => {
+    async function placeOrder(
+      adminToken: string,
+      customerToken: string,
+    ): Promise<OrderResponse> {
+      const product = await createProduct(adminToken);
+      await addToCart(customerToken, product.id, 1);
+      const response = await request(app.getHttpServer())
+        .post('/orders')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(201);
+      return response.body as OrderResponse;
+    }
+
+    it('is created as PENDING', async () => {
+      const adminToken = await getAdminAccessToken();
+      const customerToken = await getCustomerAccessToken();
+
+      const order = await placeOrder(adminToken, customerToken);
+
+      expect(order.status).toBe('PENDING');
+    });
+
+    it('lets an admin advance the order through PENDING -> PAID -> SHIPPED -> DELIVERED', async () => {
+      const adminToken = await getAdminAccessToken();
+      const customerToken = await getCustomerAccessToken();
+      const order = await placeOrder(adminToken, customerToken);
+
+      for (const status of ['PAID', 'SHIPPED', 'DELIVERED']) {
+        const response = await request(app.getHttpServer())
+          .patch(`/orders/${order.id}/status`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ status })
+          .expect(200);
+        expect((response.body as OrderResponse).status).toBe(status);
+      }
+    });
+
+    it('rejects an illegal transition (Delivered -> Pending) with a domain error', async () => {
+      const adminToken = await getAdminAccessToken();
+      const customerToken = await getCustomerAccessToken();
+      const order = await placeOrder(adminToken, customerToken);
+      for (const status of ['PAID', 'SHIPPED', 'DELIVERED']) {
+        await request(app.getHttpServer())
+          .patch(`/orders/${order.id}/status`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ status })
+          .expect(200);
+      }
+
+      const response = await request(app.getHttpServer())
+        .patch(`/orders/${order.id}/status`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'PENDING' })
+        .expect(409);
+      expect((response.body as { message: string }).message).toContain(
+        'DELIVERED',
+      );
+    });
+
+    it('forbids a customer from updating order status', async () => {
+      const adminToken = await getAdminAccessToken();
+      const customerToken = await getCustomerAccessToken();
+      const order = await placeOrder(adminToken, customerToken);
+
+      await request(app.getHttpServer())
+        .patch(`/orders/${order.id}/status`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .send({ status: 'PAID' })
+        .expect(403);
+    });
+
+    it('returns 404 for a non-existent order', async () => {
+      const adminToken = await getAdminAccessToken();
+
+      await request(app.getHttpServer())
+        .patch(`/orders/${randomUUID()}/status`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'PAID' })
+        .expect(404);
+    });
+
+    it('restores the reserved stock when an order is cancelled', async () => {
+      const adminToken = await getAdminAccessToken();
+      const customerToken = await getCustomerAccessToken();
+      const product = await createProduct(adminToken, { stockQuantity: 5 });
+      await addToCart(customerToken, product.id, 2);
+      const placeResponse = await request(app.getHttpServer())
+        .post('/orders')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(201);
+      const order = placeResponse.body as OrderResponse;
+
+      const afterPlacement = await prisma.product.findUniqueOrThrow({
+        where: { id: product.id },
+      });
+      expect(afterPlacement.stockQuantity).toBe(3);
+
+      await request(app.getHttpServer())
+        .patch(`/orders/${order.id}/status`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'CANCELLED' })
+        .expect(200);
+
+      const afterCancellation = await prisma.product.findUniqueOrThrow({
+        where: { id: product.id },
+      });
+      expect(afterCancellation.stockQuantity).toBe(5);
+    });
   });
 });

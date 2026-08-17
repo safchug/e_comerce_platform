@@ -9,6 +9,7 @@ import {
 } from '../../../cart';
 import { type ProductRepository, PRODUCT_REPOSITORY } from '../../../product';
 import { Order, OrderItemProps } from '../../domain/order.entity';
+import { OrderStatus } from '../../domain/order-status.enum';
 import {
   EmptyCartError,
   InactiveProductError,
@@ -81,6 +82,7 @@ export class PlaceOrderUseCase {
       id: randomUUID(),
       userId,
       items,
+      status: OrderStatus.PENDING,
       subtotal: totals.subtotal,
       discount: totals.discount,
       taxRate: totals.taxRate,
