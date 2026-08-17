@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Order } from '../../../domain/order.entity';
+import { OrderStatus } from '../../../domain/order-status.enum';
 
 export class OrderItemResponseDto {
   @ApiProperty({ example: '3f6a9b2e-8c1d-4e3a-9f5b-1a2b3c4d5e6f' })
@@ -33,6 +34,9 @@ export class OrderResponseDto {
 
   @ApiProperty({ type: [OrderItemResponseDto] })
   items!: OrderItemResponseDto[];
+
+  @ApiProperty({ enum: OrderStatus, example: OrderStatus.PENDING })
+  status!: OrderStatus;
 
   @ApiProperty({ example: 'USD' })
   currency!: string;
@@ -81,6 +85,7 @@ export function toOrderResponseDto(order: Order): OrderResponseDto {
         lineTotalCents: unitPriceCents * item.quantity,
       };
     }),
+    status: order.status,
     currency: order.total.getCurrency(),
     subtotalCents: order.subtotal.getCents(),
     discountCents: order.discount.getCents(),

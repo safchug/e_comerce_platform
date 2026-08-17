@@ -20,6 +20,14 @@ enum Role {
   ADMIN
 }
 
+enum OrderStatus {
+  PENDING
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
 model User {
   id               String   @id @default(uuid())
   email            String   @unique
@@ -97,6 +105,7 @@ model Order {
   userId        String
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   items         OrderItem[]
+  status        OrderStatus @default(PENDING)
   currency      String
   subtotalCents Int
   discountCents Int

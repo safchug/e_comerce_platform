@@ -11,6 +11,9 @@ export interface OrderRepository {
    * lines that would otherwise have succeeded.
    */
   placeOrder(order: Order, cartId: string): Promise<Order>;
+  findById(id: string): Promise<Order | null>;
+  /** Persists an order's current field values, e.g. after a status transition. */
+  save(order: Order): Promise<Order>;
 }
 
 export const ORDER_REPOSITORY = Symbol('ORDER_REPOSITORY');

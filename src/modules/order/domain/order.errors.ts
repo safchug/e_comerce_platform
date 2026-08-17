@@ -1,3 +1,5 @@
+import { OrderStatus } from './order-status.enum';
+
 export class EmptyCartError extends Error {
   constructor() {
     super('Cannot place an order from an empty cart');
@@ -33,5 +35,20 @@ export class InsufficientStockError extends Error {
       `Only ${available} unit(s) in stock, but ${requested} were requested`,
     );
     this.name = 'InsufficientStockError';
+  }
+}
+
+export class OrderNotFoundError extends Error {
+  constructor() {
+    super('Order not found');
+    this.name = 'OrderNotFoundError';
+  }
+}
+
+/** Enforces the order lifecycle FSM (see Order.ALLOWED_TRANSITIONS) - thrown on any transition not explicitly allowed. */
+export class InvalidOrderStatusTransitionError extends Error {
+  constructor(from: OrderStatus, to: OrderStatus) {
+    super(`Cannot transition order from ${from} to ${to}`);
+    this.name = 'InvalidOrderStatusTransitionError';
   }
 }

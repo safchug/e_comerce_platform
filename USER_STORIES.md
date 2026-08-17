@@ -126,9 +126,10 @@
 - [ ] **US-022**: As a shopper, I want to place an order from my cart, so that I can purchase items.
   - AC: Order creation is a single transaction (cart → order → stock decrement) — all-or-nothing.
   - Learn: transactional boundaries, unit of work pattern.
-- [ ] **US-023**: As the system, I want order state to move through a defined lifecycle (Pending → Paid → Shipped → Delivered/Cancelled), so that invalid transitions are impossible.
+- [x] **US-023**: As the system, I want order state to move through a defined lifecycle (Pending → Paid → Shipped → Delivered/Cancelled), so that invalid transitions are impossible.
   - AC: Illegal transitions (e.g. Delivered → Pending) throw a domain error.
   - Learn: State pattern / finite state machines for domain modeling.
+  - Status: added `OrderStatus` (`src/modules/order/domain/order-status.enum.ts`) and an `Order.withStatus(target)` method backed by a private `ALLOWED_TRANSITIONS` table (`src/modules/order/domain/order.entity.ts`) - a table-driven FSM rather than a full GoF State pattern (one class per state felt like overkill for 5 states/6 edges; the table is the whole rule set at a glance and stays consistent with the rest of the domain layer's plain-data style). `Order` stays immutable: `withStatus` returns a new instance or throws `InvalidOrderStatusTransitionError`, same shape as `Cart`'s `withItemAdded`/etc. Wired an admin-only `PATCH /orders/:id/status` (`OrderController`, guarded by `RolesGuard`/`Roles(ADMIN)`) through a new `UpdateOrderStatusUseCase` and `OrderRepository.findById`/`save`, so the rule is reachable end-to-end and covered by an e2e suite (valid chain, illegal transition, 403 for non-admins, 404 for a missing order) as well as entity-level unit tests for every legal and illegal edge. Orders are created as `PENDING`; `PAID`→`CANCELLED` stays open but `SHIPPED`→`CANCELLED` doesn't, matching the not-yet-built US-024 cancellation rule ("not allowed after Shipped") so that story won't need to touch the transition table.
 - [ ] **US-024**: As a shopper, I want to cancel an order before it ships, so that I'm not charged for mistakes.
   - AC: Cancellation reverses stock reservation; not allowed after "Shipped".
   - Learn: compensating actions, saga-lite thinking.

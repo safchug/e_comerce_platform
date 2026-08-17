@@ -808,6 +808,145 @@
         "summary": "Remove a product from the cart",
         "tags": ["cart"]
       }
+    },
+    "/orders": {
+      "post": {
+        "operationId": "OrderController_placeOrder",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "The placed order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "A product in the cart no longer exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Cart is empty, a product is inactive, or a requested quantity exceeds stock",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Place an order from the current user's cart",
+        "tags": ["orders"]
+      }
+    },
+    "/orders/{id}/status": {
+      "patch": {
+        "operationId": "OrderController_updateStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateOrderStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated order",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Caller does not have the ADMIN role",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No order with that id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The requested status is not reachable from the current status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Advance an order's lifecycle status (admin-only)",
+        "tags": ["orders"]
+      }
     }
   },
   "info": {
@@ -1324,6 +1463,121 @@
           }
         },
         "required": ["quantity"]
+      },
+      "OrderItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "example": "3f6a9b2e-8c1d-4e3a-9f5b-1a2b3c4d5e6f"
+          },
+          "quantity": {
+            "type": "number",
+            "example": 2
+          },
+          "unitPriceCents": {
+            "type": "number",
+            "description": "Unit price at the time the order was placed, in cents",
+            "example": 1999
+          },
+          "lineTotalCents": {
+            "type": "number",
+            "description": "unitPriceCents x quantity, in cents",
+            "example": 3998
+          }
+        },
+        "required": [
+          "productId",
+          "quantity",
+          "unitPriceCents",
+          "lineTotalCents"
+        ]
+      },
+      "OrderResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier of the order",
+            "example": "9c1a2b3c-4d5e-6f7a-8b9c-0d1e2f3a4b5c"
+          },
+          "userId": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemResponseDto"
+            }
+          },
+          "status": {
+            "enum": ["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED"],
+            "type": "string",
+            "example": "PENDING"
+          },
+          "currency": {
+            "type": "string",
+            "example": "USD"
+          },
+          "subtotalCents": {
+            "type": "number",
+            "description": "Sum of line totals, in cents",
+            "example": 3998
+          },
+          "discountCents": {
+            "type": "number",
+            "description": "Discount applied, in cents",
+            "example": 0
+          },
+          "taxRate": {
+            "type": "number",
+            "description": "Flat tax rate applied, e.g. 0.0825 for 8.25%",
+            "example": 0.0825
+          },
+          "taxCents": {
+            "type": "number",
+            "description": "Tax charged on the post-discount amount, in cents",
+            "example": 330
+          },
+          "totalCents": {
+            "type": "number",
+            "description": "subtotalCents - discountCents + taxCents",
+            "example": 4328
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "items",
+          "status",
+          "currency",
+          "subtotalCents",
+          "discountCents",
+          "taxRate",
+          "taxCents",
+          "totalCents",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "UpdateOrderStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": ["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED"],
+            "type": "string",
+            "example": "PAID"
+          }
+        },
+        "required": ["status"]
       }
     }
   }

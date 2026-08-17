@@ -4,6 +4,8 @@ import {
   EmptyCartError,
   InactiveProductError,
   InsufficientStockError,
+  InvalidOrderStatusTransitionError,
+  OrderNotFoundError,
   ProductNotFoundError,
 } from '../../domain/order.errors';
 
@@ -16,12 +18,16 @@ type DomainError =
   | EmptyCartError
   | InactiveProductError
   | InsufficientStockError
+  | InvalidOrderStatusTransitionError
+  | OrderNotFoundError
   | ProductNotFoundError;
 
 const STATUS_BY_ERROR_NAME: Record<string, number> = {
   EmptyCartError: 409,
   InactiveProductError: 409,
   InsufficientStockError: 409,
+  InvalidOrderStatusTransitionError: 409,
+  OrderNotFoundError: 404,
   ProductNotFoundError: 404,
 };
 
@@ -30,6 +36,8 @@ const STATUS_BY_ERROR_NAME: Record<string, number> = {
   EmptyCartError,
   InactiveProductError,
   InsufficientStockError,
+  InvalidOrderStatusTransitionError,
+  OrderNotFoundError,
   ProductNotFoundError,
 )
 export class OrderDomainExceptionFilter implements ExceptionFilter {

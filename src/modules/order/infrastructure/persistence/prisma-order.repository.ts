@@ -7,6 +7,7 @@ import type {
 import { Money } from '../../../../domain/shared/money';
 import { OrderRepository } from '../../domain/order.repository';
 import { Order } from '../../domain/order.entity';
+import { OrderStatus } from '../../domain/order-status.enum';
 import { InsufficientStockError } from '../../domain/order.errors';
 
 type OrderRowWithItems = PrismaOrderRow & { items: PrismaOrderItemRow[] };
@@ -43,6 +44,7 @@ export class PrismaOrderRepository implements OrderRepository {
         data: {
           id: order.id,
           userId: order.userId,
+          status: order.status,
           currency: order.total.getCurrency(),
           subtotalCents: order.subtotal.getCents(),
           discountCents: order.discount.getCents(),
@@ -71,6 +73,23 @@ export class PrismaOrderRepository implements OrderRepository {
     return this.toDomain(row);
   }
 
+  async findById(id: string): Promise<Order | null> {
+    const row = await this.prisma.order.findUnique({
+      where: { id },
+      include: { items: true },
+    });
+    return row ? this.toDomain(row) : null;
+  }
+
+  async save(order: Order): Promise<Order> {
+    const row = await this.prisma.order.update({
+      where: { id: order.id },
+      data: { status: order.status },
+      include: { items: true },
+    });
+    return this.toDomain(row);
+  }
+
   private toDomain(row: OrderRowWithItems): Order {
     const currency = row.currency;
     return Order.create({
@@ -81,6 +100,7 @@ export class PrismaOrderRepository implements OrderRepository {
         quantity: item.quantity,
         unitPrice: Money.fromCents(item.unitPriceCents, item.currency),
       })),
+      status: OrderStatus[row.status],
       subtotal: Money.fromCents(row.subtotalCents, currency),
       discount: Money.fromCents(row.discountCents, currency),
       taxRate: row.taxRate,

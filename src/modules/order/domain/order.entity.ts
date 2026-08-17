@@ -1,5 +1,10 @@
 import { Money } from '../../../domain/shared/money';
-import { EmptyCartError, InvalidQuantityError } from './order.errors';
+import {
+  EmptyCartError,
+  InvalidOrderStatusTransitionError,
+  InvalidQuantityError,
+} from './order.errors';
+import { OrderStatus } from './order-status.enum';
 
 export interface OrderItemProps {
   productId: string;
@@ -12,6 +17,7 @@ export interface OrderProps {
   id: string;
   userId: string;
   items: OrderItemProps[];
+  status: OrderStatus;
   subtotal: Money;
   discount: Money;
   taxRate: number;
@@ -29,6 +35,22 @@ export interface OrderProps {
  * change to a product's price never alters a past order.
  */
 export class Order {
+  /**
+   * The order lifecycle as a table-driven finite state machine: each key
+   * lists the statuses reachable directly from it. Delivered and Cancelled
+   * are terminal - no key means no outbound transitions.
+   */
+  private static readonly ALLOWED_TRANSITIONS: Record<
+    OrderStatus,
+    readonly OrderStatus[]
+  > = {
+    [OrderStatus.PENDING]: [OrderStatus.PAID, OrderStatus.CANCELLED],
+    [OrderStatus.PAID]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
+    [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
+    [OrderStatus.DELIVERED]: [],
+    [OrderStatus.CANCELLED]: [],
+  };
+
   private constructor(private readonly props: OrderProps) {}
 
   static create(props: OrderProps): Order {
@@ -59,6 +81,10 @@ export class Order {
     return this.props.items;
   }
 
+  get status(): OrderStatus {
+    return this.props.status;
+  }
+
   get subtotal(): Money {
     return this.props.subtotal;
   }
@@ -85,5 +111,14 @@ export class Order {
 
   get updatedAt(): Date {
     return this.props.updatedAt;
+  }
+
+  /** Advances the order to `target`, or throws if that's not a legal move from the current status. */
+  withStatus(target: OrderStatus): Order {
+    const allowed = Order.ALLOWED_TRANSITIONS[this.props.status];
+    if (!allowed.includes(target)) {
+      throw new InvalidOrderStatusTransitionError(this.props.status, target);
+    }
+    return new Order({ ...this.props, status: target, updatedAt: new Date() });
   }
 }

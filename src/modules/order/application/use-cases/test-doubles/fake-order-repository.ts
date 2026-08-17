@@ -16,6 +16,7 @@ import { Order } from '../../../domain/order.entity';
 export class FakeOrderRepository implements OrderRepository {
   readonly placedOrders: Order[] = [];
   readonly clearedCartIds: string[] = [];
+  private readonly ordersById = new Map<string, Order>();
   private failNextWith: Error | null = null;
 
   /** Simulates the transaction losing a stock race between the use case's pre-check and the write, and rolling back. */
@@ -31,6 +32,20 @@ export class FakeOrderRepository implements OrderRepository {
     }
     this.placedOrders.push(order);
     this.clearedCartIds.push(cartId);
+    this.ordersById.set(order.id, order);
+    return Promise.resolve(order);
+  }
+
+  seed(order: Order): void {
+    this.ordersById.set(order.id, order);
+  }
+
+  findById(id: string): Promise<Order | null> {
+    return Promise.resolve(this.ordersById.get(id) ?? null);
+  }
+
+  save(order: Order): Promise<Order> {
+    this.ordersById.set(order.id, order);
     return Promise.resolve(order);
   }
 }
