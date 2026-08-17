@@ -6,6 +6,7 @@ import { ORDER_REPOSITORY } from './domain/order.repository';
 import { PrismaOrderRepository } from './infrastructure/persistence/prisma-order.repository';
 import { PlaceOrderUseCase } from './application/use-cases/place-order.use-case';
 import { UpdateOrderStatusUseCase } from './application/use-cases/update-order-status.use-case';
+import { CancelOrderUseCase } from './application/use-cases/cancel-order.use-case';
 import { OrderController } from './infrastructure/http/order.controller';
 
 @Module({
@@ -15,6 +16,7 @@ import { OrderController } from './infrastructure/http/order.controller';
     { provide: ORDER_REPOSITORY, useClass: PrismaOrderRepository },
     PlaceOrderUseCase,
     UpdateOrderStatusUseCase,
+    CancelOrderUseCase,
   ],
 })
 export class OrderModule {}
