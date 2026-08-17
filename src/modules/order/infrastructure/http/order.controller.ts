@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -27,6 +29,7 @@ import { type AccessTokenPayload } from '../../../user/application/ports/token.s
 import { ErrorResponseDto } from '../../../../infrastructure/http/dto/error-response.dto';
 import { PlaceOrderUseCase } from '../../application/use-cases/place-order.use-case';
 import { UpdateOrderStatusUseCase } from '../../application/use-cases/update-order-status.use-case';
+import { CancelOrderUseCase } from '../../application/use-cases/cancel-order.use-case';
 import { OrderDomainExceptionFilter } from './order-domain-exception.filter';
 import { OrderResponseDto, toOrderResponseDto } from './dto/order-response.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -44,6 +47,7 @@ export class OrderController {
   constructor(
     private readonly placeOrderUseCase: PlaceOrderUseCase,
     private readonly updateOrderStatusUseCase: UpdateOrderStatusUseCase,
+    private readonly cancelOrderUseCase: CancelOrderUseCase,
   ) {}
 
   @Post()
@@ -65,6 +69,31 @@ export class OrderController {
     @CurrentUser() user: AccessTokenPayload,
   ): Promise<OrderResponseDto> {
     const order = await this.placeOrderUseCase.execute(user.sub);
+    return toOrderResponseDto(order);
+  }
+
+  @Post(':id/cancel')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "Cancel the current user's own order before it ships",
+  })
+  @ApiOkResponse({
+    description: 'The cancelled order',
+    type: OrderResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'No order with that id belonging to the caller',
+    type: ErrorResponseDto,
+  })
+  @ApiConflictResponse({
+    description: 'The order has already shipped or is otherwise terminal',
+    type: ErrorResponseDto,
+  })
+  async cancelOrder(
+    @Param('id') id: string,
+    @CurrentUser() user: AccessTokenPayload,
+  ): Promise<OrderResponseDto> {
+    const order = await this.cancelOrderUseCase.execute(id, user.sub);
     return toOrderResponseDto(order);
   }
 

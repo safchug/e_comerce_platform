@@ -374,4 +374,116 @@ describe('Order placement (e2e)', () => {
       expect(afterCancellation.stockQuantity).toBe(5);
     });
   });
+
+  describe('order cancellation (shopper-initiated)', () => {
+    async function placeOrder(
+      adminToken: string,
+      customerToken: string,
+      productOverrides?: Partial<{ priceCents: number; stockQuantity: number }>,
+    ): Promise<{ order: OrderResponse; product: ProductResponse }> {
+      const product = await createProduct(adminToken, productOverrides);
+      await addToCart(customerToken, product.id, 1);
+      const response = await request(app.getHttpServer())
+        .post('/orders')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(201);
+      return { order: response.body as OrderResponse, product };
+    }
+
+    it('rejects cancelling with no bearer token', async () => {
+      await request(app.getHttpServer())
+        .post(`/orders/${randomUUID()}/cancel`)
+        .expect(401);
+    });
+
+    it('lets a customer cancel their own PENDING order and restores stock', async () => {
+      const adminToken = await getAdminAccessToken();
+      const customerToken = await getCustomerAccessToken();
+      const { order, product } = await placeOrder(adminToken, customerToken, {
+        stockQuantity: 5,
+      });
+
+      const afterPlacement = await prisma.product.findUniqueOrThrow({
+        where: { id: product.id },
+      });
+      expect(afterPlacement.stockQuantity).toBe(4);
+
+      const response = await request(app.getHttpServer())
+        .post(`/orders/${order.id}/cancel`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(200);
+      expect((response.body as OrderResponse).status).toBe('CANCELLED');
+
+      const afterCancellation = await prisma.product.findUniqueOrThrow({
+        where: { id: product.id },
+      });
+      expect(afterCancellation.stockQuantity).toBe(5);
+    });
+
+    it('lets a customer cancel their own PAID order', async () => {
+      const adminToken = await getAdminAccessToken();
+      const customerToken = await getCustomerAccessToken();
+      const { order } = await placeOrder(adminToken, customerToken);
+      await request(app.getHttpServer())
+        .patch(`/orders/${order.id}/status`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'PAID' })
+        .expect(200);
+
+      const response = await request(app.getHttpServer())
+        .post(`/orders/${order.id}/cancel`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(200);
+      expect((response.body as OrderResponse).status).toBe('CANCELLED');
+    });
+
+    it('rejects cancelling once the order has shipped', async () => {
+      const adminToken = await getAdminAccessToken();
+      const customerToken = await getCustomerAccessToken();
+      const { order } = await placeOrder(adminToken, customerToken);
+      for (const status of ['PAID', 'SHIPPED']) {
+        await request(app.getHttpServer())
+          .patch(`/orders/${order.id}/status`)
+          .set('Authorization', `Bearer ${adminToken}`)
+          .send({ status })
+          .expect(200);
+      }
+
+      const response = await request(app.getHttpServer())
+        .post(`/orders/${order.id}/cancel`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(409);
+      expect((response.body as { message: string }).message).toContain(
+        'SHIPPED',
+      );
+    });
+
+    it("rejects cancelling another customer's order as if it didn't exist", async () => {
+      const adminToken = await getAdminAccessToken();
+      const customerToken = await getCustomerAccessToken();
+      const otherCustomerToken = await getCustomerAccessToken();
+      const { order } = await placeOrder(adminToken, customerToken);
+
+      await request(app.getHttpServer())
+        .post(`/orders/${order.id}/cancel`)
+        .set('Authorization', `Bearer ${otherCustomerToken}`)
+        .expect(404);
+
+      const stillPending = await request(app.getHttpServer())
+        .patch(`/orders/${order.id}/status`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'PAID' })
+        .expect(200);
+      expect((stillPending.body as OrderResponse).status).toBe('PAID');
+    });
+
+    it('returns 404 for a non-existent order', async () => {
+      const customerToken = await getCustomerAccessToken();
+
+      await request(app.getHttpServer())
+        .post(`/orders/${randomUUID()}/cancel`)
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(404);
+    });
+  });
 });
