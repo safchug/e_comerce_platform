@@ -264,25 +264,26 @@ describe('Order placement (e2e)', () => {
     expect(cart.items).toHaveLength(2);
   });
 
-  describe('order status lifecycle', () => {
-    async function placeOrder(
-      adminToken: string,
-      customerToken: string,
-    ): Promise<OrderResponse> {
-      const product = await createProduct(adminToken);
-      await addToCart(customerToken, product.id, 1);
-      const response = await request(app.getHttpServer())
-        .post('/orders')
-        .set('Authorization', `Bearer ${customerToken}`)
-        .expect(201);
-      return response.body as OrderResponse;
-    }
+  async function placeOrder(
+    adminToken: string,
+    customerToken: string,
+    productOverrides?: Partial<{ priceCents: number; stockQuantity: number }>,
+  ): Promise<{ order: OrderResponse; product: ProductResponse }> {
+    const product = await createProduct(adminToken, productOverrides);
+    await addToCart(customerToken, product.id, 1);
+    const response = await request(app.getHttpServer())
+      .post('/orders')
+      .set('Authorization', `Bearer ${customerToken}`)
+      .expect(201);
+    return { order: response.body as OrderResponse, product };
+  }
 
+  describe('order status lifecycle', () => {
     it('is created as PENDING', async () => {
       const adminToken = await getAdminAccessToken();
       const customerToken = await getCustomerAccessToken();
 
-      const order = await placeOrder(adminToken, customerToken);
+      const { order } = await placeOrder(adminToken, customerToken);
 
       expect(order.status).toBe('PENDING');
     });
@@ -290,7 +291,7 @@ describe('Order placement (e2e)', () => {
     it('lets an admin advance the order through PENDING -> PAID -> SHIPPED -> DELIVERED', async () => {
       const adminToken = await getAdminAccessToken();
       const customerToken = await getCustomerAccessToken();
-      const order = await placeOrder(adminToken, customerToken);
+      const { order } = await placeOrder(adminToken, customerToken);
 
       for (const status of ['PAID', 'SHIPPED', 'DELIVERED']) {
         const response = await request(app.getHttpServer())
@@ -305,7 +306,7 @@ describe('Order placement (e2e)', () => {
     it('rejects an illegal transition (Delivered -> Pending) with a domain error', async () => {
       const adminToken = await getAdminAccessToken();
       const customerToken = await getCustomerAccessToken();
-      const order = await placeOrder(adminToken, customerToken);
+      const { order } = await placeOrder(adminToken, customerToken);
       for (const status of ['PAID', 'SHIPPED', 'DELIVERED']) {
         await request(app.getHttpServer())
           .patch(`/orders/${order.id}/status`)
@@ -327,7 +328,7 @@ describe('Order placement (e2e)', () => {
     it('forbids a customer from updating order status', async () => {
       const adminToken = await getAdminAccessToken();
       const customerToken = await getCustomerAccessToken();
-      const order = await placeOrder(adminToken, customerToken);
+      const { order } = await placeOrder(adminToken, customerToken);
 
       await request(app.getHttpServer())
         .patch(`/orders/${order.id}/status`)
@@ -376,20 +377,6 @@ describe('Order placement (e2e)', () => {
   });
 
   describe('order cancellation (shopper-initiated)', () => {
-    async function placeOrder(
-      adminToken: string,
-      customerToken: string,
-      productOverrides?: Partial<{ priceCents: number; stockQuantity: number }>,
-    ): Promise<{ order: OrderResponse; product: ProductResponse }> {
-      const product = await createProduct(adminToken, productOverrides);
-      await addToCart(customerToken, product.id, 1);
-      const response = await request(app.getHttpServer())
-        .post('/orders')
-        .set('Authorization', `Bearer ${customerToken}`)
-        .expect(201);
-      return { order: response.body as OrderResponse, product };
-    }
-
     it('rejects cancelling with no bearer token', async () => {
       await request(app.getHttpServer())
         .post(`/orders/${randomUUID()}/cancel`)

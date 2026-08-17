@@ -52,10 +52,21 @@ describe('CancelOrderUseCase', () => {
     const cancelled = await useCase.execute('order-1', 'user-1');
 
     expect(cancelled.status).toBe(OrderStatus.CANCELLED);
+    expect((await orderRepository.findById('order-1'))?.status).toBe(
+      OrderStatus.CANCELLED,
+    );
   });
 
   it('throws InvalidOrderStatusTransitionError once the order has shipped', async () => {
     orderRepository.seed(makeOrder(OrderStatus.SHIPPED));
+
+    await expect(useCase.execute('order-1', 'user-1')).rejects.toThrow(
+      InvalidOrderStatusTransitionError,
+    );
+  });
+
+  it('throws InvalidOrderStatusTransitionError when the order is already cancelled', async () => {
+    orderRepository.seed(makeOrder(OrderStatus.CANCELLED));
 
     await expect(useCase.execute('order-1', 'user-1')).rejects.toThrow(
       InvalidOrderStatusTransitionError,
