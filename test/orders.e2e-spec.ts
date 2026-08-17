@@ -345,5 +345,33 @@ describe('Order placement (e2e)', () => {
         .send({ status: 'PAID' })
         .expect(404);
     });
+
+    it('restores the reserved stock when an order is cancelled', async () => {
+      const adminToken = await getAdminAccessToken();
+      const customerToken = await getCustomerAccessToken();
+      const product = await createProduct(adminToken, { stockQuantity: 5 });
+      await addToCart(customerToken, product.id, 2);
+      const placeResponse = await request(app.getHttpServer())
+        .post('/orders')
+        .set('Authorization', `Bearer ${customerToken}`)
+        .expect(201);
+      const order = placeResponse.body as OrderResponse;
+
+      const afterPlacement = await prisma.product.findUniqueOrThrow({
+        where: { id: product.id },
+      });
+      expect(afterPlacement.stockQuantity).toBe(3);
+
+      await request(app.getHttpServer())
+        .patch(`/orders/${order.id}/status`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .send({ status: 'CANCELLED' })
+        .expect(200);
+
+      const afterCancellation = await prisma.product.findUniqueOrThrow({
+        where: { id: product.id },
+      });
+      expect(afterCancellation.stockQuantity).toBe(5);
+    });
   });
 });

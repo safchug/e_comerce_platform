@@ -1,4 +1,5 @@
 import { Order } from './order.entity';
+import { OrderStatus } from './order-status.enum';
 
 /** Port: infrastructure provides the implementation (e.g. Prisma). */
 export interface OrderRepository {
@@ -12,8 +13,19 @@ export interface OrderRepository {
    */
   placeOrder(order: Order, cartId: string): Promise<Order>;
   findById(id: string): Promise<Order | null>;
-  /** Persists an order's current field values, e.g. after a status transition. */
-  save(order: Order): Promise<Order>;
+  /**
+   * Atomically moves an order from `from` to `to`, conditioned on the order
+   * still being in `from` at write time - the same compare-and-swap shape
+   * as placeOrder's stock decrement, so two racing transitions on the same
+   * order can't both apply (see PrismaOrderRepository.updateStatus). Throws
+   * OrderConcurrentUpdateError if the order's status no longer matches
+   * `from` (e.g. a concurrent update already moved it).
+   */
+  updateStatus(
+    orderId: string,
+    from: OrderStatus,
+    to: OrderStatus,
+  ): Promise<Order>;
 }
 
 export const ORDER_REPOSITORY = Symbol('ORDER_REPOSITORY');

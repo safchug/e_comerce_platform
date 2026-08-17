@@ -3,6 +3,8 @@ import {
   ORDER_REPOSITORY,
 } from '../../../domain/order.repository';
 import { Order } from '../../../domain/order.entity';
+import { OrderStatus } from '../../../domain/order-status.enum';
+import { OrderConcurrentUpdateError } from '../../../domain/order.errors';
 
 /**
  * In-memory fake used across use-case unit tests (no I/O).
@@ -44,9 +46,18 @@ export class FakeOrderRepository implements OrderRepository {
     return Promise.resolve(this.ordersById.get(id) ?? null);
   }
 
-  save(order: Order): Promise<Order> {
-    this.ordersById.set(order.id, order);
-    return Promise.resolve(order);
+  updateStatus(
+    orderId: string,
+    from: OrderStatus,
+    to: OrderStatus,
+  ): Promise<Order> {
+    const order = this.ordersById.get(orderId);
+    if (!order || order.status !== from) {
+      return Promise.reject(new OrderConcurrentUpdateError());
+    }
+    const updated = order.withStatus(to);
+    this.ordersById.set(orderId, updated);
+    return Promise.resolve(updated);
   }
 }
 

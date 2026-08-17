@@ -52,3 +52,11 @@ export class InvalidOrderStatusTransitionError extends Error {
     this.name = 'InvalidOrderStatusTransitionError';
   }
 }
+
+/** Thrown when a status transition's precondition (the order's status at read time) no longer holds by write time - i.e. a concurrent update won the race. */
+export class OrderConcurrentUpdateError extends Error {
+  constructor() {
+    super('Order was modified concurrently; please retry');
+    this.name = 'OrderConcurrentUpdateError';
+  }
+}

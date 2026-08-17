@@ -4,6 +4,7 @@ import { Order } from '../../domain/order.entity';
 import { OrderStatus } from '../../domain/order-status.enum';
 import {
   InvalidOrderStatusTransitionError,
+  OrderConcurrentUpdateError,
   OrderNotFoundError,
 } from '../../domain/order.errors';
 import { Money } from '../../../../domain/shared/money';
@@ -58,5 +59,39 @@ describe('UpdateOrderStatusUseCase', () => {
     await expect(
       useCase.execute('missing-order', OrderStatus.PAID),
     ).rejects.toThrow(OrderNotFoundError);
+  });
+
+  it('propagates OrderConcurrentUpdateError from the repository instead of swallowing it', async () => {
+    orderRepository.seed(makeOrder(OrderStatus.PENDING));
+    // Simulates a second request winning the race between this use case's
+    // findById and its write: the repository's compare-and-swap sees the
+    // order has already moved and rejects the write.
+    jest
+      .spyOn(orderRepository, 'updateStatus')
+      .mockRejectedValueOnce(new OrderConcurrentUpdateError());
+
+    await expect(useCase.execute('order-1', OrderStatus.PAID)).rejects.toThrow(
+      OrderConcurrentUpdateError,
+    );
+  });
+});
+
+describe('FakeOrderRepository.updateStatus (compare-and-swap)', () => {
+  it('rejects when the order has moved since `from` was read', async () => {
+    const orderRepository = new FakeOrderRepository();
+    orderRepository.seed(makeOrder(OrderStatus.PENDING));
+    await orderRepository.updateStatus(
+      'order-1',
+      OrderStatus.PENDING,
+      OrderStatus.CANCELLED,
+    );
+
+    await expect(
+      orderRepository.updateStatus(
+        'order-1',
+        OrderStatus.PENDING,
+        OrderStatus.PAID,
+      ),
+    ).rejects.toThrow(OrderConcurrentUpdateError);
   });
 });

@@ -8,7 +8,10 @@ import { Money } from '../../../../domain/shared/money';
 import { OrderRepository } from '../../domain/order.repository';
 import { Order } from '../../domain/order.entity';
 import { OrderStatus } from '../../domain/order-status.enum';
-import { InsufficientStockError } from '../../domain/order.errors';
+import {
+  InsufficientStockError,
+  OrderConcurrentUpdateError,
+} from '../../domain/order.errors';
 
 type OrderRowWithItems = PrismaOrderRow & { items: PrismaOrderItemRow[] };
 
@@ -81,12 +84,43 @@ export class PrismaOrderRepository implements OrderRepository {
     return row ? this.toDomain(row) : null;
   }
 
-  async save(order: Order): Promise<Order> {
-    const row = await this.prisma.order.update({
-      where: { id: order.id },
-      data: { status: order.status },
-      include: { items: true },
+  async updateStatus(
+    orderId: string,
+    from: OrderStatus,
+    to: OrderStatus,
+  ): Promise<Order> {
+    const row = await this.prisma.$transaction(async (tx) => {
+      // Conditioned on the order still being in `from`, same shape as the
+      // stock decrement in placeOrder: if a concurrent request already
+      // moved the order, the WHERE matches nothing, count is 0, and we
+      // throw instead of overwriting whatever that other update set.
+      const result = await tx.order.updateMany({
+        where: { id: orderId, status: from },
+        data: { status: to },
+      });
+      if (result.count === 0) {
+        throw new OrderConcurrentUpdateError();
+      }
+
+      // Cancelling reverses the stock reservation made at placement time
+      // (see PlaceOrderUseCase / placeOrder's decrement) - otherwise a
+      // cancelled order's items stay permanently unavailable.
+      if (to === OrderStatus.CANCELLED) {
+        const items = await tx.orderItem.findMany({ where: { orderId } });
+        for (const item of items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stockQuantity: { increment: item.quantity } },
+          });
+        }
+      }
+
+      return tx.order.findUniqueOrThrow({
+        where: { id: orderId },
+        include: { items: true },
+      });
     });
+
     return this.toDomain(row);
   }
 

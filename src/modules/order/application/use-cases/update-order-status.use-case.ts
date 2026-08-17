@@ -10,8 +10,13 @@ import {
 /**
  * Advances an order's status. Illegal transitions surface as
  * InvalidOrderStatusTransitionError from Order.withStatus - this use case
- * doesn't duplicate that rule, just wires the repository lookup/save
+ * doesn't duplicate that rule, just wires the repository lookup/write
  * around it.
+ *
+ * The write itself goes through OrderRepository.updateStatus, conditioned
+ * on the order still being in the status this use case just read - if a
+ * concurrent request already moved it, that throws OrderConcurrentUpdateError
+ * rather than silently clobbering the other update.
  */
 @Injectable()
 export class UpdateOrderStatusUseCase {
@@ -26,7 +31,7 @@ export class UpdateOrderStatusUseCase {
       throw new OrderNotFoundError();
     }
 
-    const updated = order.withStatus(status);
-    return this.orderRepository.save(updated);
+    order.withStatus(status);
+    return this.orderRepository.updateStatus(orderId, order.status, status);
   }
 }
